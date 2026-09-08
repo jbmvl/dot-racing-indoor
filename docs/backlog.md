@@ -34,8 +34,8 @@ issues sans retravail.
 - [ ] **Déposer deux ou trois vrais GPX dans `public/routes/`** et les déclarer
       dans `lib/route/catalog.js`. Non fait : l'environnement de développement
       n'a pas d'accès sortant vers les sites de parcours (bloqué par la
-      politique réseau). L'import rend l'attente indolore, mais l'application
-      livrée n'a toujours qu'un tracé synthétique
+      politique réseau). L'import rend l'attente indolore, mais un visiteur qui
+      arrive sans fichier ne voit qu'un écran d'import
 - [ ] Vérifier le lissage d'altitude sur de vrais relevés : la fenêtre de 50 m
       a été réglée sur du bruit simulé, pas sur un GPS de vélo
 - [x] Profil altimétrique : traitement visuel repris de Dot Racing (axes muets,

@@ -9,7 +9,7 @@
  * connaît qu'un `RoutePath`.
  */
 
-import { routePointsFromGpx, buildRoutePoints } from './gpx.js';
+import { parseGpxTrackPoints, buildRoutePoints } from './gpx.js';
 import { buildRoutePath } from '../riderScene/routePath.js';
 
 /**
@@ -51,7 +51,7 @@ export function findRoute(id) {
 export async function loadRoute(descriptor, { signal } = {}) {
   const response = await fetch(descriptor.file, { signal });
   if (!response.ok) throw new Error(`parcours introuvable (HTTP ${response.status})`);
-  const path = buildRoutePath(routePointsFromGpx(await response.text()));
+  const path = pathFromRawPoints(parseGpxTrackPoints(await response.text()));
   if (!path) throw new Error('parcours inexploitable');
   return { descriptor, path };
 }
@@ -76,25 +76,32 @@ export function pathFromRawPoints(rawPoints) {
 /**
  * Lit un fichier GPX déposé par le joueur.
  *
+ * Rend les points **bruts** (`{lng, lat, ele}`), et c'est la seule forme qui
+ * circule ici : c'est celle que `library.packPoints` range, et celle que
+ * `pathFromRawPoints` sait lire. Le format « compact » (`{c, d, a}`) est un
+ * détail interne de `buildRoutePath`, produit au dernier moment et jamais
+ * stocké — le lissage d'altitude qu'il porte est un réglage du moteur, pas une
+ * propriété du fichier.
+ *
  * @param {File} file
- * @returns {Promise<{name: string, points: Array}>}
+ * @returns {Promise<{name: string, points: Array<{lng:number, lat:number, ele:number|null}>}>}
  */
 export async function readGpxFile(file) {
   if (!file) throw new Error('aucun fichier');
   const text = await file.text();
   let points;
   try {
-    points = routePointsFromGpx(text);
+    points = parseGpxTrackPoints(text);
+    // On construit le tracé tout de suite, pour refuser un fichier
+    // inexploitable maintenant plutôt qu'au moment de rouler. Le résultat est
+    // jeté : c'est une validation, pas un cache.
+    pathFromRawPoints(points);
   } catch (e) {
     // Le nom du fichier est ce que le joueur a sous les yeux : le citer évite
     // le « ça ne marche pas » sans savoir lequel des trois fichiers déposés a
     // été refusé.
     throw new Error(`« ${file.name} » n’est pas un GPX lisible (${e.message})`);
   }
-  // `buildRoutePoints` a déjà validé que le tracé tient debout ; on le refait
-  // ici pour refuser tout de suite un fichier inexploitable, plutôt que de le
-  // ranger et d'échouer au moment de rouler.
-  pathFromRawPoints(points);
   const name = nameFromGpx(text) || file.name.replace(/\.gpx$/i, '');
   return { name, points };
 }

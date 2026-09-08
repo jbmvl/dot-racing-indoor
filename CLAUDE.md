@@ -67,6 +67,26 @@ coureur local. Les rebrancher serait une régression, pas un rattrapage.
 (`raceClock.js` reste présent parce que la **foule** — les autres joueurs, dont
 les positions arrivent bien par un flux — s'en sert.)
 
+## Deux formats de points, et c'est là que ça casse
+
+Dans `src/lib/route/`, deux représentations d'un tracé circulent :
+
+| | |
+|---|---|
+| **brut** — `{lng, lat, ele}` | le seul format qui traverse les modules : ce que le lecteur GPX rend, ce que le dépôt range, ce que `pathFromRawPoints` lit |
+| **compact** — `{c, d, a}` | un détail interne de `buildRoutePath`, produit au dernier moment et jamais stocké |
+
+Le compact porte une abscisse cumulée et une altitude **lissée**. Le stocker
+figerait un réglage du moteur — la fenêtre de lissage — dans une donnée du
+joueur, et une correction de ce réglage ne profiterait plus aux parcours déjà
+déposés.
+
+Les deux formats ont déjà provoqué une panne totale de l'import : des points
+compacts passés à une fonction qui attend du brut, et tous les tests unitaires
+au vert parce qu'aucun ne franchissait la couture. Quand tu touches à cette
+chaîne, le test qui compte est `src/lib/route/import.test.mjs`, qui va du
+fichier au tracé roulable en passant par le dépôt.
+
 ## Portée d'un chantier
 
 - Une étape à la fois, telle qu'elle a été demandée. Pas de refactor préventif,

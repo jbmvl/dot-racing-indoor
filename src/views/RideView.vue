@@ -23,6 +23,13 @@
         :distance-m="ride.distanceM.value"
         :grade-pct="ride.gradePct.value"
         :elapsed-s="ride.elapsedS.value"
+        :lifted="true"
+      />
+
+      <ElevationProfile
+        v-if="ride.status.value === 'ready'"
+        :path="ride.path.value"
+        :route-distance-m="ride.routeDistanceM.value"
       />
 
       <header v-if="ride.route.value" class="ride-view__header">
@@ -58,6 +65,7 @@ import { ref } from 'vue';
 import RideScene from '@/components/ride/RideScene.vue';
 import RideHud from '@/components/ride/RideHud.vue';
 import RoutePicker from '@/components/ride/RoutePicker.vue';
+import ElevationProfile from '@/components/ride/ElevationProfile.vue';
 import ActionButton from '@/components/ui/ActionButton.vue';
 import { useRide } from '@/composables/ride/useRide.js';
 import { useRouteLibrary } from '@/composables/ride/useRouteLibrary.js';

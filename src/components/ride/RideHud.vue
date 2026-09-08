@@ -1,5 +1,5 @@
 <template>
-  <div class="ride-hud">
+  <div class="ride-hud" :class="{ 'is-lifted': lifted }">
     <div class="ride-hud__row">
       <div class="ride-hud__stat ride-hud__stat--primary">
         <span class="ride-hud__value">{{ speedKmh.toFixed(1) }}</span>
@@ -38,6 +38,8 @@ const props = defineProps({
   distanceM: { type: Number, default: 0 },
   gradePct: { type: Number, default: 0 },
   elapsedS: { type: Number, default: 0 },
+  /** Remonte le bandeau au-dessus du profil altimétrique, quand il est affiché. */
+  lifted: { type: Boolean, default: false },
 });
 
 const clock = computed(() => {
@@ -55,12 +57,17 @@ const clock = computed(() => {
   position: absolute;
   left: 50%;
   bottom: max(1rem, env(safe-area-inset-bottom));
+  transition: bottom 0.2s ease;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
   pointer-events: none;
+}
+
+.ride-hud.is-lifted {
+  bottom: calc(92px + max(0.75rem, env(safe-area-inset-bottom)));
 }
 
 .ride-hud__row {

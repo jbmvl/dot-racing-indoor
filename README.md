@@ -5,9 +5,9 @@ Une séance de home-trainer dans un paysage réel : le décor est généré par
 données OpenStreetMap du lieu où passe le parcours, et l'interface reprend
 celle de [Dot Racing](https://github.com/jbmvl/1230-bornes).
 
-**État : lot 2 sur 6, en partie.** Le décor défile le long d'un parcours, à une
-vitesse réglée au clavier, et n'importe quel GPX peut être déposé dans
-l'application. Il n'y a encore ni modèle physique, ni home-trainer, ni
+**État : lot 2 sur 6, presque fini.** Le décor défile le long d'un parcours, à
+une vitesse réglée au clavier, n'importe quel GPX peut être déposé dans
+l'application, et le profil altimétrique montre où l'on en est. Il n'y a encore ni modèle physique, ni home-trainer, ni
 multijoueur — voir [`docs/backlog.md`](docs/backlog.md).
 
 ## Démarrer

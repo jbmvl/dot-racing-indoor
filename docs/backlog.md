@@ -38,10 +38,14 @@ issues sans retravail.
       livrée n'a toujours qu'un tracé synthétique
 - [ ] Vérifier le lissage d'altitude sur de vrais relevés : la fenêtre de 50 m
       a été réglée sur du bruit simulé, pas sur un GPS de vélo
-- [ ] Profil altimétrique : reprendre `ElevationProfileBottomPanel.vue` +
-      `useElevationProfile.js` de Dot Racing, garder le rendu Chart.js,
-      réécrire la source de données autour du `RoutePath`
-- [ ] Marquer la position courante sur le profil
+- [x] Profil altimétrique : traitement visuel repris de Dot Racing (axes muets,
+      courbe remplie jusqu'aux bords, chiffres en Fugaz One), source de données
+      réécrite autour du `RoutePath` — 2 632 lignes là-bas, dont l'essentiel
+      tenait aux avatars, à la trace passée/future et au survol synchronisé avec
+      la carte
+- [x] Position courante sur le profil, et voile sur la portion parcourue
+- [ ] Le profil n'est pas interactif (ni survol, ni clic). Volontaire pour
+      l'instant : il informe, il ne pilote rien
 
 ## L3 — La physique
 
@@ -86,6 +90,7 @@ issues sans retravail.
 |---|---|
 | Le parcours **livré** est synthétique | il ne suit aucune route. L'import de GPX contourne le problème, mais ne le règle pas : un visiteur qui arrive sans fichier ne voit que lui |
 | Pas d'accès sortant vers les sites de parcours | la politique réseau de l'environnement de développement bloque le téléchargement de GPX ; ils doivent être déposés à la main |
+| Le mode sombre est du code mort | `styles/dark-mode.css` a été repris, mais pas le `useDarkMode` qui pose `data-theme` sur `<html>`. Les composants sont prêts, rien ne bascule. Le profil altimétrique, lui, suit aussi `prefers-color-scheme`, donc il sera juste dans les deux cas |
 | Trois tests de Dot Racing n'ont pas été repris | ils couvraient `routeAnchor`, `motionDiagnostics` et `vectorSourceConfig`, modules qui n'ont pas de raison d'être ici (51 tests là-bas → 42 repris ici) |
 | Pas de test bout-en-bout du mouvement | celui de Dot Racing reposait sur l'ancre de tracé ; il faudra en écrire un autre, autour de physique → distance → tracé → assiette |
 | CGU des tuiles Carto non vérifiées | à faire avant d'ouvrir au public |

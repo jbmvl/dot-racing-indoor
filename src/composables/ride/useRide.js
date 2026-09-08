@@ -34,9 +34,18 @@ export function useRide() {
   const status = ref('idle'); // idle | loading | ready | error
   const errorMessage = ref('');
   const route = shallowRef(null); // descripteur, non réactif en profondeur
+  /*
+   * Le tracé, pour le profil altimétrique. `shallowRef` et non `ref` : un
+   * `RoutePath` porte des tableaux typés de plusieurs dizaines de milliers
+   * d'entrées, que Vue proxifierait un à un sans le moindre bénéfice — rien
+   * là-dedans ne change jamais.
+   */
+  const path = shallowRef(null);
 
   // Compteurs publiés vers l'interface.
   const distanceM = ref(0);
+  /** Abscisse **sur le tracé** — celle que le profil altimétrique pointe. */
+  const routeDistanceM = ref(0);
   const speedKmh = ref(0);
   const gradePct = ref(0);
   const laps = ref(0);
@@ -64,6 +73,7 @@ export function useRide() {
       const loaded = await resolver();
       ride = createRideState({ path: loaded.path, loop: loaded.descriptor.loop });
       route.value = loaded.descriptor;
+      path.value = loaded.path;
       targetSpeedMs = (KEYBOARD_START_KMH * 1000) / 3600;
       elapsed = 0;
       publish(true);
@@ -92,6 +102,7 @@ export function useRide() {
     if (!force && now - lastPublishMs < PUBLISH_INTERVAL_MS) return;
     lastPublishMs = now;
     distanceM.value = ride.distanceM;
+    routeDistanceM.value = ride.routeDistanceM;
     speedKmh.value = ride.speedMs * 3.6;
     gradePct.value = ride.gradeAt * 100;
     laps.value = ride.laps;
@@ -124,7 +135,9 @@ export function useRide() {
     status,
     errorMessage,
     route,
+    path,
     distanceM,
+    routeDistanceM,
     speedKmh,
     gradePct,
     laps,

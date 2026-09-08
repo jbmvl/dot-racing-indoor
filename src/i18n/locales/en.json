@@ -1,0 +1,22 @@
+{
+  "COMMON": {
+    "SHOW_MORE": "Show more",
+    "SHOW_LESS": "Show less",
+    "LOADING": "Loading…",
+    "RETRY": "Retry"
+  },
+  "RIDE": {
+    "TITLE": "Ride",
+    "START": "Start",
+    "SCENE_LOADING": "Building the landscape…",
+    "SCENE_ERROR": "3D landscape unavailable",
+    "ROUTE_ERROR": "Route unavailable",
+    "SPEED": "Speed",
+    "DISTANCE": "Distance",
+    "GRADE": "Gradient",
+    "TIME": "Time",
+    "LAPS": "Laps",
+    "KEYBOARD_HINT": "↑ / ↓ to set speed",
+    "SYNTHETIC_ROUTE": "Demo track: it does not follow any road."
+  }
+}

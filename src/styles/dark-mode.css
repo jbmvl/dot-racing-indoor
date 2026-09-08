@@ -1,0 +1,216 @@
+/* =========================================================
+   Dark mode styles for UI components
+
+   Uses CSS variables defined in main.css (:root / [data-theme="dark"]).
+   Higher specificity (html[data-theme="dark"] prefix) ensures these
+   overrides win over scoped component styles when needed.
+   ========================================================= */
+
+/* ===== CustomCheckbox & CustomRadio ===== */
+html[data-theme="dark"] .checkbox-box {
+  border-color: var(--dark-text-secondary);
+  background-color: var(--dark-bg-tertiary);
+}
+
+html[data-theme="dark"] .checkbox-input:checked + .checkbox-box {
+  background: var(--c-icon);
+  border-color: var(--c-icon);
+}
+
+html[data-theme="dark"] .check-icon {
+  fill: var(--c-bg);
+}
+
+html[data-theme="dark"] .checkbox-label {
+  color: var(--c-text);
+}
+
+html[data-theme="dark"] .radio-box {
+  border-color: var(--dark-text-secondary);
+  background-color: var(--dark-bg-tertiary);
+}
+
+html[data-theme="dark"] .radio-input:checked + .radio-box {
+  border-color: var(--dark-text-primary);
+  background-color: var(--dark-bg-tertiary);
+}
+
+html[data-theme="dark"] .radio-input:checked + .radio-box::after {
+  background-color: var(--dark-text-primary);
+}
+
+html[data-theme="dark"] .radio-label {
+  color: var(--c-text);
+}
+
+/* ===== ActionButton ===== */
+/* Default/secondary use CSS vars — only explicit variants need overrides. */
+html[data-theme="dark"] .action-button.danger {
+  background-color: #dc2626;
+  color: var(--dark-text-primary);
+  border-color: #dc2626;
+}
+
+html[data-theme="dark"] .action-button.danger-outline {
+  border-color: var(--c-danger);
+  color: var(--c-danger);
+}
+
+/* ===== BasePopin ===== */
+html[data-theme="dark"] .base-popin-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+html[data-theme="dark"] .user-info-block {
+  background: var(--glass-bg-darker) !important;
+}
+
+html[data-theme="dark"] .base-popin-content {
+  background-color: var(--dark-bg-primary);
+  color: var(--dark-text-primary);
+  border-color: var(--dark-border);
+}
+
+/* Broad cascade to override hardcoded scoped text colors inside popins.
+   html[data-theme="dark"] specificity (0,2,1) > scoped .class[data-v-xxx] (0,2,0). */
+html[data-theme="dark"] .base-popin-content p,
+html[data-theme="dark"] .base-popin-content li {
+  color: inherit;
+}
+
+html[data-theme="dark"] .popin-content {
+  color: var(--dark-text-primary);
+  background-color: var(--dark-bg-primary);
+  border: 1px solid var(--dark-border);
+}
+
+html[data-theme="dark"] .popin-body {
+  color: var(--dark-text-primary);
+}
+
+/* ===== Forms & Inputs ===== */
+html[data-theme="dark"] .custom-input,
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  background-color: var(--dark-bg-secondary);
+  color: var(--dark-text-primary);
+  border-color: var(--dark-border);
+}
+
+html[data-theme="dark"] .custom-input::placeholder,
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: var(--dark-text-muted);
+}
+
+html[data-theme="dark"] .custom-input:focus,
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] textarea:focus {
+  outline-color: var(--dark-text-primary);
+  border-color: var(--dark-text-primary);
+}
+
+
+/* ===== Tag ===== */
+html[data-theme="dark"] .tag {
+  background-color: var(--dark-bg-tertiary);
+  color: var(--dark-text-primary);
+  border-color: var(--dark-border);
+}
+
+/* ===== Floating Menu ===== */
+/* Background comes from --glass-bg variable override in main.css. */
+html[data-theme="dark"] .floating-menu {
+  color: var(--dark-text-primary);
+  border: 2px solid var(--dark-border);
+  box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.55);
+}
+
+/* ===== Weather Overlay (forecast) ===== */
+
+
+/* ===== TimingFloatingLabels — map labels ===== */
+/* Light-background labels adapt to dark background on dark map */
+html[data-theme="dark"] .timing-label--city,
+html[data-theme="dark"] .timing-label--checkpoint,
+html[data-theme="dark"] .timing-label--pause,
+html[data-theme="dark"] .timing-label--finish {
+  background: rgba(26, 31, 46, 0.88);
+  color: var(--dark-text-primary);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="dark"] .timing-label--city.timing-label--planned-break {
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+html[data-theme="dark"] .service-icon--rarity-black {
+  color: var(--dark-text-primary);
+}
+
+html[data-theme="dark"] .service-icon-wrap .selected-dot {
+  background: var(--dark-text-primary);
+}
+
+/* ===== Tables ===== */
+html[data-theme="dark"] table {
+  color: var(--c-text);
+  border-color: var(--dark-border);
+}
+
+html[data-theme="dark"] th {
+  background-color: var(--dark-bg-secondary);
+  color: var(--c-text);
+  border-color: var(--dark-border);
+}
+
+html[data-theme="dark"] td {
+  border-color: var(--dark-border);
+}
+
+/* ===== Code / Pre ===== */
+html[data-theme="dark"] code,
+html[data-theme="dark"] pre {
+  background-color: var(--dark-bg-secondary);
+  color: var(--dark-text-secondary);
+  border-color: var(--dark-border);
+}
+
+/* ===== Scrollbar ===== */
+html[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--dark-border);
+  border-radius: 4px;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-text-muted);
+}
+
+/* ===== Misc component classes ===== */
+html[data-theme="dark"] .subsection-header {
+  border-color: var(--dark-border);
+}
+
+html[data-theme="dark"] .back-link {
+  color: var(--dark-text-secondary);
+}
+
+html[data-theme="dark"] .abandon-section {
+  color: var(--dark-text-primary);
+}
+
+html[data-theme="dark"] .abandon-confirm-text {
+  color: var(--dark-text-secondary);
+}

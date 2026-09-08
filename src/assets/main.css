@@ -1,0 +1,541 @@
+/* Font imports */
+@import url('https://fonts.googleapis.com/css2?family=Fugaz+One&family=Montserrat:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Noto+Sans:wght@400;700&display=swap');
+
+@font-face {
+	font-family: 'Inter';
+	src: url('./fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+	font-weight: 100 900;
+	font-style: normal;
+}
+@font-face {
+	font-family: 'Inter';
+	src: url('./fonts/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+	font-weight: 100 900;
+	font-style: italic;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {overflow: hidden;}
+body {
+	margin:0; 
+	overflow: hidden; 
+	font-family: 'Inter', sans-serif; 
+	color: #333;
+	/* Désactiver le zoom navigateur */
+	touch-action: pan-x pan-y;
+	-ms-touch-action: pan-x pan-y;
+}
+
+/* Désactiver le double-clic pour zoomer sur tous les éléments */
+* {
+	touch-action: manipulation;
+	-ms-touch-action: manipulation;
+	-webkit-touch-callout: none;
+}
+
+/* Ré-activer la sélection sur les éléments de formulaire et texte */
+input, textarea, select, [contenteditable] {
+	user-select: text;
+	-webkit-user-select: text;
+	touch-action: manipulation;
+}
+
+/* Safe-area / iPhone notch helpers (centralized) */
+:root {
+	--fugaz-letter-spacing: -0.05em;
+	--service-icon-muted-opacity: 0.65;
+
+	/* ── Semantic design tokens (light mode defaults) ── */
+	--c-text:       #333;
+	--c-text-soft:  #666;
+	--c-text-muted: #888;
+	--c-icon:       #222;
+	--c-bg:         #ffffff;
+	--c-bg-soft:    #f5f5f5;
+	--c-bg-muted:   #eeeeee;
+	--c-border:     rgba(0, 0, 0, 0.12);
+	--c-divider:    rgba(0, 0, 0, 0.15);
+	--c-danger:     #c0392b;
+
+	--glass-bg:
+		linear-gradient(
+			rgba(250, 250, 250, 0.8),
+			rgba(250, 250, 250, 0.9),
+			rgba(250, 250, 250, 0.9),
+			rgba(250, 250, 250, 0.8)
+		),
+		radial-gradient(
+			59.02% 84.3% at 100% 73.25%,
+			rgba(110, 11, 152, 0.35) 0%,
+			rgba(110, 11, 152, 0) 100%
+		),
+		radial-gradient(
+			76.38% 80.89% at 1.55% 5.12%,
+			rgba(226, 100, 17, 0.58) 0%,
+			rgba(245, 128, 49, 0) 100%
+		),
+		linear-gradient(
+			43.49deg,
+			rgba(2, 154, 255, 0.39) -7.16%,
+			rgba(255, 182, 0, 0.39) 54.38%,
+			rgba(255, 182, 0, 0.39) 67.26%
+		),
+		rgba(255, 255, 255, 0.4);
+	
+	/* --glass-bg: rgb(243, 243, 243); */
+	--glass-bg-blend: normal, soft-light, normal, normal, normal;
+
+	--glass-bg-darker:
+		linear-gradient(
+			rgba(250, 250, 250, 0.6),
+			rgba(250, 250, 250, 0.8),
+			rgba(250, 250, 250, 0.5)
+		),
+		radial-gradient(
+			59.02% 84.3% at 100% 73.25%,
+			rgba(110, 11, 152, 0.35) 0%,
+			rgba(110, 11, 152, 0) 100%
+		),
+		radial-gradient(
+			76.38% 80.89% at 1.55% 5.12%,
+			rgba(226, 100, 17, 0.58) 0%,
+			rgba(245, 128, 49, 0) 100%
+		),
+		linear-gradient(
+			43.49deg,
+			rgba(2, 154, 255, 0.39) -7.16%,
+			rgba(255, 182, 0, 0.39) 54.38%,
+			rgba(255, 182, 0, 0.39) 67.26%
+		),
+		rgba(255, 255, 255, 0.4);
+	
+
+	/* Même palette sans le voile blanc — utile pour background-clip: text */
+	--glass-gradient:
+	linear-gradient(
+			rgba(0, 0, 0, 0.01),
+			rgba(0, 0, 0, 0.01)
+		),
+		radial-gradient(59.02% 84.3% at 100% 73.25%, #6E0B98 0%, rgba(110, 11, 152, 0) 100%) ,
+		radial-gradient(37.81% 61.06% at 14.7% 29.17%, #E26411 0%, rgba(245, 128, 49, 0) 100%),
+		linear-gradient(43.49deg, #029AFF -7.16%, #d89b00 54.38%, #d89b00 67.26%),
+		linear-gradient(90deg, #6B63DB 0%, #A119A4 100%);
+	/* --glass-gradient: #000 */
+
+
+	/* Même palette sans le voile blanc et opacité réduite — utile pour les backgrounds violents */
+	--glass-gradient-opacity-reduced:
+		radial-gradient(59.02% 84.3% at 100% 73.25%, rgba(110, 11, 152, 0.5) 0%, rgba(110, 11, 152, 0) 100%),
+		radial-gradient(37.81% 61.06% at 14.7% 29.17%, rgba(226, 101, 17, 0.5) 0%, rgba(245, 128, 49, 0) 100%),
+		linear-gradient(43.49deg, rgba(2, 154, 255, 0.45) -7.16%, rgba(255, 183, 0, 0.42) 54.38%, rgba(255, 183, 0, 0.42) 67.26%),
+		linear-gradient(90deg, rgba(107, 99, 219, 0.5) 0%, rgba(162, 25, 164, 0.47) 100%);
+	/* --glass-gradient: #000 */
+
+	/* Version en couches séparées pour animation rotative (utilisée par .glass-gradient-animated) */
+	--glass-gradient-opacity-reduced-layer-a:
+		radial-gradient(59.02% 84.3% at 100% 73.25%, rgba(110, 11, 152, 0.5) 0%, rgba(110, 11, 152, 0) 100%),
+		linear-gradient(90deg, rgba(107, 99, 219, 0.5) 0%, rgba(162, 25, 164, 0.47) 100%);
+	--glass-gradient-opacity-reduced-layer-b:
+		radial-gradient(37.81% 61.06% at 14.7% 29.17%, rgba(226, 101, 17, 0.5) 0%, rgba(245, 128, 49, 0) 100%),
+		linear-gradient(43.49deg, rgba(2, 154, 255, 0.45) -7.16%, rgba(255, 183, 0, 0.42) 54.38%, rgba(255, 183, 0, 0.42) 67.26%);
+
+	/* Même palette sans le voile blanc — utile pour background-clip: text */
+	--glass-gradient-no-yellow:
+	linear-gradient(
+			rgba(0, 0, 0, 0.01),
+			rgba(0, 0, 0, 0.01)
+		),
+		radial-gradient(59.02% 84.3% at 100% 73.25%, #6E0B98 0%, rgba(110, 11, 152, 0) 100%) ,
+		radial-gradient(37.81% 61.06% at 14.7% 29.17%, #E26411 0%, rgba(245, 128, 49, 0) 100%),
+		linear-gradient(43.49deg, #029AFF -7.16%, #d84400 54.38%, #d84400 67.26%),
+		linear-gradient(90deg, #6B63DB 0%, #A119A4 100%);
+
+
+	/* Expose safe-area insets as CSS variables with fallbacks */
+	--safe-area-inset-top: env(safe-area-inset-top, 0px);
+	--safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+	--safe-area-inset-left: env(safe-area-inset-left, 0px);
+	--safe-area-inset-right: env(safe-area-inset-right, 0px);
+
+	/* Use dynamic viewport units where supported to avoid 100vh bugs on mobile Safari
+	   dvh = dynamic viewport height (updates with browser chrome), fallback to svh/lvh.
+	   This helps prevent a slightly-too-large viewport that causes a micro-scroll. */
+	--app-dvh: 100dvh;
+	--app-svh: 100svh;
+	--app-lvh: 100lvh;
+	/* Top safe area offset — 0 in browser (safe area already handled by viewport),
+	   overridden to env(safe-area-inset-top) in standalone below */
+	--app-safe-top: 0px;
+	/* Extra bottom gap for BottomLayout — in browser, dvh already accounts for the
+	   toolbar so we add a design gap; in standalone the safe area covers the home
+	   indicator and no extra gap is needed */
+	--app-bottom-extra: 20px;
+}
+
+/* In standalone mode (PWA / Capacitor native), there is no browser chrome to track.
+   Use stable lvh so the app fills the full screen (map goes edge-to-edge under
+   Dynamic Island / notch / home indicator — this is intentional).
+   --app-safe-top exposes the Dynamic Island / status bar height so top-anchored
+   UI (menus, sponsors) can offset themselves accordingly.
+   Bottom breathing room is already handled by BottomLayout's
+   calc(env(safe-area-inset-bottom) + 20px) padding. */
+@media (display-mode: standalone) {
+	:root {
+		--app-dvh: 100lvh;
+		--app-safe-top: env(safe-area-inset-top, 0px);
+		--app-bottom-extra: 0px;
+	}
+}
+
+/* =========================================================
+   Dark mode theme — applied when [data-theme="dark"]
+   ========================================================= */
+[data-theme="dark"] {
+	color-scheme: dark;
+
+	/* Base text and background colors */
+	--dark-bg-primary: #0f1419;
+	--dark-bg-secondary: #1a1f2e;
+	--dark-bg-tertiary: #232d3d;
+	--dark-text-primary: #f0f3f8;
+	--dark-text-secondary: #cbd5e0;
+	--dark-text-muted: #8892a3;
+	--dark-border: #3d4452;
+
+	/* Semantic token overrides for dark mode */
+	--c-text:       var(--dark-text-primary);
+	--c-text-soft:  var(--dark-text-secondary);
+	--c-text-muted: var(--dark-text-muted);
+	--c-icon:       var(--dark-text-primary);
+	--c-bg:         var(--dark-bg-primary);
+	--c-bg-soft:    var(--dark-bg-secondary);
+	--c-bg-muted:   var(--dark-bg-tertiary);
+	--c-border:     var(--dark-border);
+	--c-divider:    rgba(255, 255, 255, 0.12);
+	--c-danger:     #f87171;
+
+	/* Override glass background for dark mode */
+	--glass-bg:
+		linear-gradient(
+			rgba(15, 20, 25, 0.76),
+			rgba(15, 20, 25, 0.82),
+			rgba(15, 20, 25, 0.82),
+			rgba(15, 20, 25, 0.76)
+		),
+		radial-gradient(
+			59.02% 84.3% at 100% 73.25%,
+			rgba(110, 11, 152, 0.38) 0%,
+			rgba(110, 11, 152, 0) 100%
+		),
+		radial-gradient(
+			76.38% 80.89% at 1.55% 5.12%,
+			rgba(226, 100, 17, 0.42) 0%,
+			rgba(245, 128, 49, 0) 100%
+		),
+		linear-gradient(
+			43.49deg,
+			rgba(2, 154, 255, 0.35) -7.16%,
+			rgba(255, 182, 0, 0.35) 54.38%,
+			rgba(255, 182, 0, 0.35) 67.26%
+		),
+		rgba(26, 31, 46, 0.6);
+
+	--glass-bg-darker:
+		linear-gradient(
+			rgba(15, 20, 25, 0.68),
+			rgba(15, 20, 25, 0.76),
+			rgba(15, 20, 25, 0.62)
+		),
+		radial-gradient(
+			59.02% 84.3% at 100% 73.25%,
+			rgba(110, 11, 152, 0.32) 0%,
+			rgba(110, 11, 152, 0) 100%
+		),
+		radial-gradient(
+			76.38% 80.89% at 1.55% 5.12%,
+			rgba(226, 100, 17, 0.38) 0%,
+			rgba(245, 128, 49, 0) 100%
+		),
+		linear-gradient(
+			43.49deg,
+			rgba(2, 154, 255, 0.3) -7.16%,
+			rgba(255, 182, 0, 0.3) 54.38%,
+			rgba(255, 182, 0, 0.3) 67.26%
+		),
+		rgba(26, 31, 46, 0.4);
+
+	--glass-gradient:
+		linear-gradient(
+			rgba(255, 255, 255, 0.02),
+			rgba(255, 255, 255, 0.02)
+		),
+		radial-gradient(59.02% 84.3% at 100% 73.25%, rgba(140, 20, 200, 0.82) 0%, rgba(110, 11, 152, 0) 100%),
+		radial-gradient(37.81% 61.06% at 14.7% 29.17%, rgba(240, 110, 15, 0.72) 0%, rgba(245, 128, 49, 0) 100%),
+		linear-gradient(43.49deg, rgba(20, 160, 255, 0.58) -7.16%, rgba(220, 165, 0, 0.58) 54.38%, rgba(220, 165, 0, 0.58) 67.26%),
+		linear-gradient(90deg, rgba(120, 110, 235, 0.8) 0%, rgba(175, 30, 175, 0.75) 100%);
+
+	--glass-gradient-no-yellow:
+		linear-gradient(
+			rgba(255, 255, 255, 0.08),
+			rgba(255, 255, 255, 0.08)
+		),
+		radial-gradient(59.02% 84.3% at 100% 73.25%, rgba(164, 52, 224, 0.92) 0%, rgba(110, 11, 152, 0) 100%),
+		radial-gradient(37.81% 61.06% at 14.7% 29.17%, rgba(255, 143, 54, 0.86) 0%, rgba(245, 128, 49, 0) 100%),
+		linear-gradient(43.49deg, rgba(74, 191, 255, 0.72) -7.16%, rgba(236, 108, 0, 0.68) 54.38%, rgba(236, 108, 0, 0.68) 67.26%),
+		linear-gradient(90deg, rgba(144, 136, 248, 0.92) 0%, rgba(204, 54, 198, 0.9) 100%);
+}
+
+[data-theme="dark"] body {
+	color: var(--dark-text-primary);
+	background-color: var(--dark-bg-primary);
+}
+
+[data-theme="dark"] p, 
+[data-theme="dark"] ul, 
+[data-theme="dark"] li {
+	color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] h1, 
+[data-theme="dark"] h2, 
+[data-theme="dark"] h3, 
+[data-theme="dark"] h4 {
+	color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] a {
+	color: #66ccff;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+	background-color: var(--dark-bg-secondary);
+	color: var(--dark-text-primary);
+	border-color: var(--dark-border);
+}
+
+[data-theme="dark"] button {
+	color: var(--dark-text-primary);
+}
+
+/* Ensure visibility of focused elements in dark mode */
+[data-theme="dark"] *:focus-visible {
+	outline-color: #66ccff;
+}
+
+/* Utility class: use on containers that sit at the bottom of the screen
+	 to ensure they are raised above the iOS home indicator / floating UI. */
+.safe-bottom {
+	padding-bottom: calc(var(--safe-area-inset-bottom, 0px));
+}
+
+/* Utility for fixed bottom bars; applies the inset to the bottom position */
+.fixed-bottom-safe {
+	/* Raise fixed bottom elements above the iOS home indicator / Safari toolbar.
+	   Add a small extra offset so components don't visually collide with the floating UI. */
+	bottom: calc(var(--safe-area-inset-bottom, 0px) + 8px);
+}
+
+/* Glass gradient animé: couches qui tournent sur des axes/vitesses différents. */
+.glass-gradient-animated {
+	position: relative;
+	overflow: hidden;
+	isolation: isolate;
+	background: var(--glass-gradient-opacity-reduced);
+	background-size: 170% 170%;
+	background-position: 50% 50%;
+	animation: glass-cloud-base 2s ease-in-out infinite alternate;
+}
+
+.glass-gradient-animated > * {
+	position: relative;
+	z-index: 1;
+}
+
+.glass-gradient-animated::before,
+.glass-gradient-animated::after {
+	content: "";
+	position: absolute;
+	inset: -35%;
+	pointer-events: none;
+	will-change: transform;
+	background-repeat: no-repeat;
+	background-size: 155% 155%;
+	background-position: 50% 50%;
+	transform-origin: 50% 50%;
+	z-index: 0;
+}
+
+.glass-gradient-animated::before {
+	background-image:
+		radial-gradient(70% 84% at 80% 70%, rgba(110, 11, 152, 0.5) 0%, rgba(110, 11, 152, 0.16) 42%, rgba(110, 11, 152, 0) 100%),
+		radial-gradient(46% 60% at 18% 30%, rgba(226, 101, 17, 0.45) 0%, rgba(245, 128, 49, 0.12) 38%, rgba(245, 128, 49, 0) 100%),
+		linear-gradient(43.49deg, rgba(2, 154, 255, 0.45) -7.16%, rgba(255, 183, 0, 0.551) 54.38%, rgba(255, 183, 0, 0.645) 67.26%);
+	animation: glass-cloud-a 4s ease-in-out infinite alternate;
+	opacity: 0.48;
+	filter: blur(7px);
+}
+
+.glass-gradient-animated::after {
+	background-image:
+		radial-gradient(66% 78% at 85% 68%, rgba(107, 99, 219, 0.5) 0%, rgba(107, 99, 219, 0.15) 44%, rgba(107, 99, 219, 0) 100%),
+		radial-gradient(42% 56% at 16% 38%, rgba(162, 25, 164, 0.5) 0%, rgba(162, 25, 164, 0.2) 40%, rgba(162, 25, 164, 0) 100%),
+		linear-gradient(90deg, rgba(107, 99, 219, 0.44) 0%, rgba(162, 25, 164, 0.42) 100%);
+	animation: glass-cloud-b 16s ease-in-out infinite alternate;
+	opacity: 0.5;
+	filter: blur(9px);
+	mix-blend-mode: multiply;
+}
+
+@keyframes glass-cloud-base {
+	0% {
+		background-position: 26% 34%;
+	}
+	50% {
+		background-position: 58% 46%;
+	}
+	100% {
+		background-position: 74% 66%;
+	}
+}
+
+@keyframes glass-cloud-a {
+	0% {
+		transform: translate3d(-14%, -8%, 0) scale(1.01);
+	}
+	30% {
+		transform: translate3d(2%, -2%, 0) scale(1.14);
+	}
+	45% {
+		transform: translate3d(8%, 5%, 0) scale(1.17);
+	}
+	75% {
+		transform: translate3d(-1%, 8%, 0) scale(1.12);
+	}
+	100% {
+		transform: translate3d(16%, 10%, 0) scale(1.05);
+	}
+}
+
+@keyframes glass-cloud-b {
+	0% {
+		transform: translate3d(12%, -9%, 0) scale(1.06);
+	}
+	25% {
+		transform: translate3d(4%, 1%, 0) scale(1.2);
+	}
+	55% {
+		transform: translate3d(-9%, 7%, 0) scale(1.22);
+	}
+	80% {
+		transform: translate3d(-14%, -1%, 0) scale(1.12);
+	}
+	100% {
+		transform: translate3d(-18%, 11%, 0) scale(1.04);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.glass-gradient-animated:not(.force-motion),
+	.glass-gradient-animated:not(.force-motion)::before,
+	.glass-gradient-animated:not(.force-motion)::after {
+		animation: none;
+	}
+}
+
+
+/* Prevent the small extra scroll on modern iOS Safari by using dynamic viewport height
+   on root containers. Keep overflow handling to the app root to avoid disabling
+   scroll in inner scrollable areas. */
+html, body, #app {
+	/* prefer dynamic viewport unit, fallback to svh/lvh if needed */
+	height: var(--app-dvh);
+	min-height: var(--app-dvh);
+
+	/* Keep normal scrolling but avoid overscroll chaining to chrome */
+	-webkit-overflow-scrolling: touch;
+	overscroll-behavior-y: contain;
+}
+
+a { cursor: pointer;}
+
+/* If some environments don't support dvh, keep a safe fallback using svh/lvh. */
+@supports not (height: 100dvh) {
+	html, body, #app {
+		height: var(--app-svh);
+		min-height: var(--app-svh);
+	}
+}
+
+
+p, ul, li { font-family: 'Inter', sans-serif; color: #333;text-transform: none;}
+h1, h2, h3, h4 {
+	font-family: "Fugaz One", sans-serif;
+	letter-spacing: var(--fugaz-letter-spacing, -0.05em);
+	text-transform: uppercase;
+	line-height: 1em;
+}
+h2 { font-size: 1.5em; margin-bottom: 0; }
+
+h1, h2, .gradiented {
+	background: var(--glass-gradient-no-yellow);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	color: transparent;
+
+}
+
+
+.inline-icon { vertical-align: middle; margin-left: 4px; }
+
+/* Street View popup */
+.streetview-popup .maplibregl-popup-content {
+	padding: 0;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+.streetview-popup .maplibregl-popup-close-button {
+	z-index: 1;
+	color: #fff;
+	font-size: 20px;
+	padding: 4px 8px;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.streetview-popup-content img {
+	display: block;
+	width: min(400px, 80vw);
+	height: min(300px, 50vh);
+	border: 0;
+	object-fit: cover;
+}
+
+/* =========================================================
+   Mobile UI density — touchscreen devices (pointer: coarse)
+
+	 Stratégie :
+	 - Ne pas appliquer de scale CSS à la carte interactive (MapLibre),
+		 car cela peut décaler le hit-test sur certains navigateurs mobiles.
+	 - Garder un scale UI séparé (menu + bottom layout).
+	 - Le "voir plus de carte" est géré côté JS via un léger zoom-out
+		 natif MapLibre au chargement.
+   ========================================================= */
+@media (pointer: coarse) {
+	/* Menu flottant : ~90% (indépendant du transform ci-dessus) */
+	.menu-wrapper {
+		zoom: 0.9;
+	}
+
+	.bottom-layout {
+		zoom: 0.9;
+	}
+}
+
+
+* { font-weight: inherit;}

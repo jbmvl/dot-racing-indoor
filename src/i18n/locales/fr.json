@@ -1,0 +1,22 @@
+{
+  "COMMON": {
+    "SHOW_MORE": "Voir plus",
+    "SHOW_LESS": "Voir moins",
+    "LOADING": "Chargement…",
+    "RETRY": "Réessayer"
+  },
+  "RIDE": {
+    "TITLE": "Séance",
+    "START": "Démarrer",
+    "SCENE_LOADING": "Construction du décor…",
+    "SCENE_ERROR": "Décor 3D indisponible",
+    "ROUTE_ERROR": "Parcours indisponible",
+    "SPEED": "Vitesse",
+    "DISTANCE": "Distance",
+    "GRADE": "Pente",
+    "TIME": "Temps",
+    "LAPS": "Tours",
+    "KEYBOARD_HINT": "↑ / ↓ pour régler la vitesse",
+    "SYNTHETIC_ROUTE": "Tracé de démonstration : il ne suit aucune route."
+  }
+}

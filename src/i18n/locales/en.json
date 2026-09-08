@@ -16,14 +16,20 @@
     "GRADE": "Gradient",
     "TIME": "Time",
     "LAPS": "Laps",
-    "KEYBOARD_HINT": "↑ / ↓ to set speed",
-    "SYNTHETIC_ROUTE": "Demo track: it does not follow any road.",
+    "KEYBOARD_HINT": "↑ / ↓ to set power",
     "IMPORT_GPX": "Import a GPX",
     "IMPORT_HINT": "Or drop a .gpx file anywhere on this page.",
     "IMPORT_VOLATILE": "Route usable now, but not saved: browser storage is full or unavailable.",
     "IMPORTED": "imported",
-    "DEMO": "demo",
     "REMOVE_ROUTE": "Remove this route",
-    "CHANGE_ROUTE": "Change route"
+    "CHANGE_ROUTE": "Change route",
+    "NO_ROUTE_YET": "No routes yet. Import a GPX file to get started."
+  },
+  "TRAINER": {
+    "CONNECT": "Connect a trainer",
+    "CONNECTING": "Searching…",
+    "CONNECTED": "Connected to {name}",
+    "OPTIONAL": "Optional: without a sensor, power is set from the keyboard.",
+    "UNSUPPORTED": "This browser has no Bluetooth support (Chrome or Edge on desktop and Android; iOS does not allow it). Power is set from the keyboard."
   }
 }

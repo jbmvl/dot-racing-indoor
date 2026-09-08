@@ -16,14 +16,20 @@
     "GRADE": "Pente",
     "TIME": "Temps",
     "LAPS": "Tours",
-    "KEYBOARD_HINT": "↑ / ↓ pour régler la vitesse",
-    "SYNTHETIC_ROUTE": "Tracé de démonstration : il ne suit aucune route.",
+    "KEYBOARD_HINT": "↑ / ↓ pour régler la puissance",
     "IMPORT_GPX": "Importer un GPX",
     "IMPORT_HINT": "Ou glissez un fichier .gpx n’importe où sur cette page.",
     "IMPORT_VOLATILE": "Parcours utilisable maintenant, mais non conservé : le stockage du navigateur est plein ou indisponible.",
     "IMPORTED": "importé",
-    "DEMO": "démo",
     "REMOVE_ROUTE": "Retirer ce parcours",
-    "CHANGE_ROUTE": "Changer de parcours"
+    "CHANGE_ROUTE": "Changer de parcours",
+    "NO_ROUTE_YET": "Aucun parcours pour l’instant. Importez un fichier GPX pour commencer."
+  },
+  "TRAINER": {
+    "CONNECT": "Connecter un home-trainer",
+    "CONNECTING": "Recherche…",
+    "CONNECTED": "Connecté à {name}",
+    "OPTIONAL": "Facultatif : sans capteur, la puissance se règle au clavier.",
+    "UNSUPPORTED": "Ce navigateur ne gère pas le Bluetooth (Chrome ou Edge sur ordinateur et Android ; iOS ne le permet pas). La puissance se règle au clavier."
   }
 }

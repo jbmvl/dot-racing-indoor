@@ -2,8 +2,20 @@
   <div class="ride-hud" :class="{ 'is-lifted': lifted }">
     <div class="ride-hud__row">
       <div class="ride-hud__stat ride-hud__stat--primary">
+        <span class="ride-hud__value">{{ Math.round(powerW) }}</span>
+        <span class="ride-hud__unit">watts</span>
+      </div>
+      <div class="ride-hud__stat">
         <span class="ride-hud__value">{{ speedKmh.toFixed(1) }}</span>
         <span class="ride-hud__unit">km/h</span>
+      </div>
+      <div class="ride-hud__stat">
+        <span class="ride-hud__value">{{ wattsPerKg.toFixed(1) }}</span>
+        <span class="ride-hud__unit">W/kg</span>
+      </div>
+      <div v-if="cadenceRpm > 0" class="ride-hud__stat">
+        <span class="ride-hud__value">{{ Math.round(cadenceRpm) }}</span>
+        <span class="ride-hud__unit">tr/min</span>
       </div>
       <div class="ride-hud__stat">
         <span class="ride-hud__value">{{ (distanceM / 1000).toFixed(2) }}</span>
@@ -18,7 +30,7 @@
         <span class="ride-hud__unit">{{ $t('RIDE.TIME').toLowerCase() }}</span>
       </div>
     </div>
-    <p class="ride-hud__hint">{{ $t('RIDE.KEYBOARD_HINT') }}</p>
+    <p v-if="keyboardDriven" class="ride-hud__hint">{{ $t('RIDE.KEYBOARD_HINT') }}</p>
   </div>
 </template>
 
@@ -35,6 +47,12 @@ import { computed } from 'vue';
 
 const props = defineProps({
   speedKmh: { type: Number, default: 0 },
+  powerW: { type: Number, default: 0 },
+  wattsPerKg: { type: Number, default: 0 },
+  /** Zéro ou absent quand aucun capteur ne la donne : la case disparaît. */
+  cadenceRpm: { type: Number, default: 0 },
+  /** Masque l'indication clavier dès qu'un capteur pilote la puissance. */
+  keyboardDriven: { type: Boolean, default: true },
   distanceM: { type: Number, default: 0 },
   gradePct: { type: Number, default: 0 },
   elapsedS: { type: Number, default: 0 },
@@ -85,7 +103,7 @@ const clock = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 4.25rem;
+  min-width: 3.7rem;
   padding: 0 0.5rem;
   color: var(--c-text);
 }

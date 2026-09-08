@@ -10,22 +10,26 @@
  * `rideState` vit donc dans une variable de fermeture, et un `publish()` appelé
  * quelques fois par seconde recopie ce que l'interface a besoin de lire.
  *
- * Le pilote de vitesse est provisoire : au clavier, on impose une vitesse.
- * C'est le lot 1. Au lot 3, cette fonction est remplacée par le modèle
- * physique (puissance, masse, pente, air), et au lot 4 la puissance vient du
- * home-trainer. Rien d'autre ne bougera : `rideState.advance(delta, vitesse)`
- * ne sait pas d'où vient la vitesse, et c'est exactement pour cela qu'il a été
- * écrit comme ça.
+ * La vitesse ne se décide plus ici : elle sort du modèle physique, qui prend
+ * une puissance et une pente. Le clavier pilote donc des **watts**, comme le
+ * fera le home-trainer au lot 4 — et le jour où celui-ci arrivera, il n'y aura
+ * qu'à remplacer la source de `powerW`. C'est la seule raison pour laquelle
+ * `rideState.advance(delta, vitesse)` ignore d'où vient sa vitesse.
  */
 
-import { ref, shallowRef, onBeforeUnmount } from 'vue';
+import { ref, reactive, shallowRef, onBeforeUnmount } from 'vue';
 import { createRideState } from '@/lib/ride/rideState.js';
+import { createSpeedIntegrator, DEFAULT_SETUP } from '@/lib/ride/physics.js';
 
-/** Vitesse de départ et bornes du pilote clavier, en km/h. */
-export const KEYBOARD_START_KMH = 28;
-export const KEYBOARD_MIN_KMH = 0;
-export const KEYBOARD_MAX_KMH = 75;
-export const KEYBOARD_STEP_KMH = 2;
+/**
+ * Pilote clavier, en watts. Il ne disparaîtra pas quand le home-trainer
+ * arrivera : c'est ce qui permet de développer sans vélo, et de tester une
+ * pente sans la grimper.
+ */
+export const KEYBOARD_START_W = 150;
+export const KEYBOARD_MIN_W = 0;
+export const KEYBOARD_MAX_W = 600;
+export const KEYBOARD_STEP_W = 10;
 
 /** Le tableau de bord n'a pas besoin de soixante rafraîchissements par seconde. */
 const PUBLISH_INTERVAL_MS = 100;
@@ -50,10 +54,21 @@ export function useRide() {
   const gradePct = ref(0);
   const laps = ref(0);
   const elapsedS = ref(0);
+  const powerW = ref(0);
+  const wattsPerKg = ref(0);
 
   // --- Non réactif ---------------------------------------------------------
   let ride = null;
-  let targetSpeedMs = 0;
+  const integrator = createSpeedIntegrator();
+  /*
+   * Deux sources de puissance, et une règle de priorité simple : **le capteur
+   * gagne quand il parle**. Il rend `null` quand il n'y a personne au bout du
+   * Bluetooth, et c'est ce `null` — et non un zéro — qui permet au clavier de
+   * reprendre la main sans se battre avec un capteur muet.
+   */
+  let powerSource = null;
+  let keyboardPowerW = 0;
+  let requestedPowerW = 0;
   let lastPublishMs = 0;
   let elapsed = 0;
 
@@ -74,7 +89,9 @@ export function useRide() {
       ride = createRideState({ path: loaded.path, loop: loaded.descriptor.loop });
       route.value = loaded.descriptor;
       path.value = loaded.path;
-      targetSpeedMs = (KEYBOARD_START_KMH * 1000) / 3600;
+      keyboardPowerW = KEYBOARD_START_W;
+      requestedPowerW = KEYBOARD_START_W;
+      integrator.reset(0);
       elapsed = 0;
       publish(true);
       status.value = 'ready';
@@ -91,7 +108,21 @@ export function useRide() {
    */
   function frame(deltaS) {
     if (!ride) return;
-    ride.advance(deltaS, targetSpeedMs);
+    /*
+     * L'ordre compte. La pente est lue **là où le coureur est**, avant qu'il
+     * avance : intégrer sur la pente d'après reviendrait à lui faire subir une
+     * côte qu'il n'a pas encore abordée — imperceptible à 30 km/h, franchement
+     * faux au passage d'un sommet.
+     */
+    const measured = powerSource?.();
+    requestedPowerW = measured != null ? measured : keyboardPowerW;
+
+    const speedMs = integrator.advance(deltaS, {
+      powerW: requestedPowerW,
+      grade: ride.gradeAt,
+      altitudeM: ride.altitudeM,
+    });
+    ride.advance(deltaS, speedMs);
     elapsed += deltaS;
     publish();
   }
@@ -107,23 +138,42 @@ export function useRide() {
     gradePct.value = ride.gradeAt * 100;
     laps.value = ride.laps;
     elapsedS.value = elapsed;
+    powerW.value = requestedPowerW;
+    wattsPerKg.value = requestedPowerW / setup.riderKg;
   }
 
-  /** Pilote provisoire : la vitesse se règle au clavier. Voir l'en-tête. */
-  function nudgeSpeed(deltaKmh) {
-    const kmh = Math.min(
-      KEYBOARD_MAX_KMH,
-      Math.max(KEYBOARD_MIN_KMH, targetSpeedMs * 3.6 + deltaKmh)
-    );
-    targetSpeedMs = (kmh * 1000) / 3600;
+  /** Règle la puissance du pilote clavier, en watts. */
+  function nudgePower(deltaW) {
+    keyboardPowerW = Math.min(KEYBOARD_MAX_W, Math.max(KEYBOARD_MIN_W, keyboardPowerW + deltaW));
+  }
+
+  /**
+   * Branche une source de puissance extérieure — le home-trainer.
+   *
+   * Elle est lue **à chaque image**, et doit rendre `null` quand elle n'a rien
+   * à dire. C'est une fonction et non un `ref` : rien ne justifie de faire
+   * traverser la réactivité de Vue à une valeur lue soixante fois par seconde.
+   *
+   * @param {(() => number|null)|null} source
+   */
+  function setPowerSource(source) {
+    powerSource = source;
+  }
+
+  /** Gabarit du coureur : la masse décide de tout en côte. */
+  const setup = reactive({ ...DEFAULT_SETUP });
+
+  function configure(next) {
+    Object.assign(setup, next);
+    integrator.configure(next);
   }
 
   function onKeydown(event) {
     if (event.key === 'ArrowUp') {
-      nudgeSpeed(KEYBOARD_STEP_KMH);
+      nudgePower(KEYBOARD_STEP_W);
       event.preventDefault();
     } else if (event.key === 'ArrowDown') {
-      nudgeSpeed(-KEYBOARD_STEP_KMH);
+      nudgePower(-KEYBOARD_STEP_W);
       event.preventDefault();
     }
   }
@@ -142,9 +192,14 @@ export function useRide() {
     gradePct,
     laps,
     elapsedS,
+    powerW,
+    wattsPerKg,
+    setup,
+    configure,
     load,
     frame,
-    nudgeSpeed,
+    nudgePower,
+    setPowerSource,
     /** Lu par la scène à chaque image. Jamais rendu réactif. */
     getRide: () => ride,
   };

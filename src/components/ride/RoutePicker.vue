@@ -10,12 +10,15 @@
     <div class="route-picker__panel">
       <h1 class="route-picker__title">{{ $t('RIDE.TITLE') }}</h1>
 
-      <ul class="route-picker__list">
+      <p v-if="routes.length === 0" class="route-picker__empty">
+        {{ $t('RIDE.NO_ROUTE_YET') }}
+      </p>
+
+      <ul v-else class="route-picker__list">
         <li v-for="route in routes" :key="route.id">
           <button type="button" class="route-picker__route" @click="$emit('choose', route)">
             <span class="route-picker__name">{{ route.name }}</span>
             <Tag v-if="route.imported">{{ $t('RIDE.IMPORTED') }}</Tag>
-            <Tag v-else-if="route.synthetic" color="#a1662f">{{ $t('RIDE.DEMO') }}</Tag>
           </button>
           <button
             v-if="route.imported"
@@ -29,11 +32,40 @@
         </li>
       </ul>
 
+      <div class="route-picker__trainer">
+        <template v-if="trainer.supported">
+          <ActionButton v-if="trainer.status.value !== 'connected'" @click="trainer.connect">
+            {{ trainer.status.value === 'connecting' ? $t('TRAINER.CONNECTING') : $t('TRAINER.CONNECT') }}
+          </ActionButton>
+          <p v-else class="route-picker__trainer-ok">
+            {{ $t('TRAINER.CONNECTED', { name: trainer.deviceName.value }) }}
+          </p>
+          <p v-if="trainer.status.value === 'error'" class="route-picker__error" role="alert">
+            {{ trainer.errorMessage.value }}
+          </p>
+          <p v-else class="route-picker__hint">{{ $t('TRAINER.OPTIONAL') }}</p>
+        </template>
+        <p v-else class="route-picker__hint">{{ $t('TRAINER.UNSUPPORTED') }}</p>
+      </div>
+
       <div class="route-picker__import">
+        <!--
+          Pas d'attribut `accept`.
+
+          `accept=".gpx,application/gpx+xml"` grisait les fichiers dans le
+          dialogue système : `application/gpx+xml` n'est un type MIME
+          enregistré nulle part, et un navigateur qui ne sait pas rattacher une
+          entrée d'`accept` à un type connu du système finit par ne plus rien
+          proposer du tout. On ne peut donc pas sélectionner son propre
+          parcours — le pire échec possible pour ce bouton.
+
+          Le filtrage se fait après coup, sur le contenu : c'est de toute façon
+          le seul juge fiable, un `.gpx` pouvant arriver renommé, sans extension
+          ou en `.xml`.
+        -->
         <input
           ref="fileInput"
           type="file"
-          accept=".gpx,application/gpx+xml"
           class="route-picker__file"
           @change="onPick"
         />
@@ -70,6 +102,8 @@ const props = defineProps({
    * message d'erreur ne serait jamais apparu.
    */
   onImport: { type: Function, required: true },
+  /** Résultat de `useTrainer` — l'appairage se fait avant de rouler. */
+  trainer: { type: Object, required: true },
 });
 defineEmits(['choose', 'remove']);
 
@@ -194,9 +228,26 @@ function onDragLeave(event) {
   display: none;
 }
 
-.route-picker__import {
+.route-picker__empty {
+  margin: 0 0 1.25rem;
+  padding: 1.25rem 1rem;
+  border: 1px dashed var(--c-border);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--c-text-muted);
+}
+
+.route-picker__import,
+.route-picker__trainer {
   padding-top: 1rem;
   border-top: 1px solid var(--c-divider);
+}
+
+.route-picker__trainer-ok {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--c-text);
 }
 
 .route-picker__hint {

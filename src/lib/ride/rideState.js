@@ -89,6 +89,15 @@ export function createRideState({ path, loop = true, startDistanceM = null }) {
       return path.gradeAt(routeDistance);
     },
 
+    /**
+     * Altitude sous le coureur, en mètres — `null` si le tracé n'en porte pas.
+     * Elle sert à la densité de l'air : à 2 000 m, on va sensiblement plus vite
+     * à puissance égale.
+     */
+    get altitudeM() {
+      return path.altitudeAt(routeDistance);
+    },
+
     /** Position et cap sous le coureur. */
     positionAt() {
       return path.positionAt(routeDistance);

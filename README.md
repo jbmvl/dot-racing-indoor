@@ -5,9 +5,10 @@ Une séance de home-trainer dans un paysage réel : le décor est généré par
 données OpenStreetMap du lieu où passe le parcours, et l'interface reprend
 celle de [Dot Racing](https://github.com/jbmvl/1230-bornes).
 
-**État : lot 2 sur 6, presque fini.** Le décor défile le long d'un parcours, à
-une vitesse réglée au clavier, n'importe quel GPX peut être déposé dans
-l'application, et le profil altimétrique montre où l'on en est. Il n'y a encore ni modèle physique, ni home-trainer, ni
+**État : lots 1 à 4, à quelques réserves près.** On importe un GPX, on pédale —
+au clavier ou sur un home-trainer connecté en Bluetooth —, la pente et la masse
+décident de la vitesse, et le profil altimétrique montre où l'on en est. Il
+manque le multijoueur, et de vrais parcours livrés. Il n'y a encore ni modèle physique, ni home-trainer, ni
 multijoueur — voir [`docs/backlog.md`](docs/backlog.md).
 
 ## Démarrer
@@ -19,7 +20,12 @@ npm test        # tests unitaires, sans navigateur
 npm run build
 ```
 
-Commandes : `↑` / `↓` règlent la vitesse.
+Commandes : `↑` / `↓` règlent la puissance, en watts. Un home-trainer connecté
+prend la main dès qu'il parle ; sans lui, le clavier suffit — c'est ce qui
+permet de tout tester sans vélo.
+
+Le Bluetooth demande Chrome ou Edge, sur ordinateur ou Android, en HTTPS ou sur
+`localhost`. **iOS ne le permet pas**, quel que soit le navigateur.
 
 ## Ce qui vient d'où
 
@@ -47,10 +53,10 @@ Le lecteur encaisse les formes qu'on rencontre vraiment : `lat`/`lon` dans
 n'importe quel ordre, préfixes d'espace de noms, segments multiples, et un
 `<rte>` quand le fichier n'a pas de `<trk>`.
 
-Celui livré (`boucle-demo.gpx`) est **synthétique** : un cercle avec une
-altitude inventée, fabriqué par `node scripts/make-demo-loop.mjs`. Il ne suit
-aucune route — le coureur traverse des champs. Il n'existe que pour donner
-quelque chose à faire défiler en attendant de vrais tracés (lot 2).
+Aucun parcours n'est livré avec l'application pour l'instant : tout passe par
+l'import. Y remettre de vrais tracés demande de régler la question des droits —
+une trace publiée par un club ou un site de parcours ne se redistribue pas dans
+un dépôt public par défaut.
 
 ## Déploiement
 

@@ -5,6 +5,7 @@
       :routes="library.routes.value"
       :volatile="library.lastImportVolatile.value"
       :on-import="handleImport"
+      :trainer="trainer"
       @choose="start"
       @remove="library.remove"
     />
@@ -13,6 +14,7 @@
       <RideScene
         :get-ride="ride.getRide"
         :on-frame="ride.frame"
+        :get-power-w="() => ride.powerW.value"
         :active="ride.status.value === 'ready'"
         :paused="false"
       />
@@ -20,6 +22,10 @@
       <RideHud
         v-if="ride.status.value === 'ready'"
         :speed-kmh="ride.speedKmh.value"
+        :power-w="ride.powerW.value"
+        :watts-per-kg="ride.wattsPerKg.value"
+        :cadence-rpm="trainer.cadenceRpm.value"
+        :keyboard-driven="trainer.status.value !== 'connected'"
         :distance-m="ride.distanceM.value"
         :grade-pct="ride.gradePct.value"
         :elapsed-s="ride.elapsedS.value"
@@ -38,9 +44,6 @@
           <span>{{ $t('RIDE.CHANGE_ROUTE') }}</span>
         </button>
         <h1 class="ride-view__title">{{ ride.route.value.name }}</h1>
-        <p v-if="ride.route.value.synthetic" class="ride-view__warning">
-          {{ $t('RIDE.SYNTHETIC_ROUTE') }}
-        </p>
       </header>
 
       <div v-if="ride.status.value === 'error'" class="ride-view__error" role="alert">
@@ -69,10 +72,19 @@ import ElevationProfile from '@/components/ride/ElevationProfile.vue';
 import ActionButton from '@/components/ui/ActionButton.vue';
 import { useRide } from '@/composables/ride/useRide.js';
 import { useRouteLibrary } from '@/composables/ride/useRouteLibrary.js';
+import { useTrainer } from '@/composables/ride/useTrainer.js';
 
 const library = useRouteLibrary();
 const ride = useRide();
+const trainer = useTrainer();
 const started = ref(false);
+
+/*
+ * Le capteur est branché une fois pour toutes, dès le montage : il rend `null`
+ * tant que rien n'est appairé, et la séance retombe alors sur le clavier. Rien
+ * à rebrancher au moment de l'appairage.
+ */
+ride.setPowerSource(trainer.getPowerW);
 
 function start(route) {
   started.value = true;
@@ -139,14 +151,6 @@ async function handleImport(file) {
   pointer-events: none;
 }
 
-.ride-view__warning {
-  margin: 0.15rem 0 0;
-  font-size: 0.72rem;
-  color: #fff;
-  opacity: 0.85;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-  pointer-events: none;
-}
 
 .ride-view__error {
   position: absolute;

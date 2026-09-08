@@ -47,23 +47,44 @@ issues sans retravail.
 - [ ] Le profil n'est pas interactif (ni survol, ni clic). Volontaire pour
       l'instant : il informe, il ne pilote rien
 
-## L3 — La physique
+## L3 — La physique — **fait**
 
-- [ ] Porter `backend/services/engine/physicsSpeedModel.js` (Dot Racing) en ESM client : garder `computeSteadyStateSpeed`, `getBikeParameters`, `getAirDensity` ; jeter tout le hors-route (VTT, gravel, freinage prudent, caps techniques), soit ~400 des 900 lignes
-- [ ] Intégrateur temps réel : `a = (F_moteur − F_résist) / m` à chaque image. C'est l'inertie qui fait qu'une séance se *sent* — la vitesse d'équilibre seule donne un rendu mou
-- [ ] Tests : équilibre à 200 W sur le plat, en montée à 6 %, roue libre en descente. Le modèle de Dot Racing sert de référence
-- [ ] Brancher `getPowerW` de la scène sur la puissance réelle (à zéro, les jambes s'arrêtent net — `RiderModel.advance` le fait déjà)
-- [ ] Poids et gabarit du joueur (`CustomSlider` est déjà là)
-- [ ] Compléter le tableau de bord : watts, W/kg, cadence
+- [x] Modèle physique écrit ici plutôt que porté de Dot Racing. Là-bas, la
+      vitesse d'équilibre est résolue à chaque tick de cinq secondes ; ici on
+      rend soixante images par seconde et le joueur pédale en direct. Poser
+      l'équilibre à chaque image donnerait un vélo sans masse
+- [x] Intégrateur de forces : `a = (F_pédale − F_aéro − F_roulement − F_gravité) / m`
+- [x] Vitesse d'équilibre conservée comme **référence de test** : l'intégrateur
+      doit y converger, ce qui prouve qu'il intègre les bonnes forces et pas
+      seulement des forces plausibles
+- [x] Densité de l'air selon l'altitude
+- [x] Le clavier pilote des **watts**, comme le fera le capteur
+- [x] Tableau de bord : watts, km/h, W/kg, pente, distance, temps
+- [ ] Réglage du gabarit dans l'interface (`setup` et `configure` existent dans
+      `useRide`, aucun écran ne les expose encore — la masse est donc figée à
+      75 + 8 kg)
+- [ ] Vent : `resistanceForces` le prend, rien ne le fournit
 
-## L4 — Le home-trainer
+## L4 — Le home-trainer — **en partie**
 
-- [ ] Web Bluetooth, service Cycling Power `0x1818` / caractéristique `0x2A63`. Le champ de flags en tête de trame décale les octets suivants — c'est la seule vraie difficulté
-- [ ] Cadence : `0x1816` / `0x2A5B`, ou le champ optionnel de `0x2A63`
-- [ ] Étendre `RiderModel.advance` pour accepter une cadence réelle. Aujourd'hui il ne connaît que le « pace » de Dot Racing (1..10) ou une cadence déduite de la vitesse ; avec un capteur, on a mieux
-- [ ] Popin d'appairage (`BasePopin`), reconnexion, état déconnecté visible
-- [ ] Lissage 3 s de la puissance **affichée**, valeur brute pour la physique
-- [ ] Garder le pilote clavier : c'est ce qui permet de développer sans vélo
+- [x] Décodage du service standard Cycling Power (`0x1818` / `0x2A63`), avec
+      les décalages calculés drapeau par drapeau — un décalage codé en dur
+      marche sur son propre capteur et échoue chez le voisin
+- [x] Cadence déduite des compteurs de manivelle, repli des compteurs 16 bits
+      traité (l'horodatage fait le tour toutes les 64 secondes : c'est un
+      événement fréquent, pas un cas limite)
+- [x] Puissance brute pour la physique, moyennée sur 3 s pour l'affichage
+- [x] Appairage depuis l'écran d'accueil, reprise du clavier si le capteur se
+      tait
+- [x] Le clavier reste, et restera : c'est ce qui permet de développer sans vélo
+- [ ] **Rien n'a été essayé avec un vrai capteur.** Le décodage est testé sur
+      des trames construites à la main ; la liaison Bluetooth elle-même ne peut
+      pas l'être sans matériel
+- [ ] Reconnexion automatique après une coupure (aujourd'hui : retour à l'état
+      « non connecté », il faut réappairer)
+- [ ] Étendre `RiderModel.advance` pour accepter une cadence réelle. Il ne
+      connaît que le « pace » de Dot Racing (1..10) ou une cadence déduite de la
+      vitesse ; avec un capteur, on a mieux
 - [ ] Hors périmètre : FTMS et le pilotage de résistance
 
 ## L5 — Multijoueur
@@ -88,7 +109,7 @@ issues sans retravail.
 
 | | |
 |---|---|
-| Le parcours **livré** est synthétique | il ne suit aucune route. L'import de GPX contourne le problème, mais ne le règle pas : un visiteur qui arrive sans fichier ne voit que lui |
+| Aucun parcours livré | le cercle synthétique a été retiré ; un visiteur qui arrive sans fichier ne voit qu'un écran d'import. Remettre de vrais tracés demande de régler la question des droits |
 | Pas d'accès sortant vers les sites de parcours | la politique réseau de l'environnement de développement bloque le téléchargement de GPX ; ils doivent être déposés à la main |
 | Le mode sombre est du code mort | `styles/dark-mode.css` a été repris, mais pas le `useDarkMode` qui pose `data-theme` sur `<html>`. Les composants sont prêts, rien ne bascule. Le profil altimétrique, lui, suit aussi `prefers-color-scheme`, donc il sera juste dans les deux cas |
 | Trois tests de Dot Racing n'ont pas été repris | ils couvraient `routeAnchor`, `motionDiagnostics` et `vectorSourceConfig`, modules qui n'ont pas de raison d'être ici (51 tests là-bas → 42 repris ici) |

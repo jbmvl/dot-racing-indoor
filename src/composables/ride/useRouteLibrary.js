@@ -71,7 +71,13 @@ export function useRouteLibrary() {
    * @returns {Promise<Object>} le descripteur du parcours déposé.
    */
   async function importFile(file, { loop = true } = {}) {
-    if (!/\.gpx$/i.test(file?.name || '')) throw new Error('ce n’est pas un fichier .gpx');
+    /*
+     * On ne filtre pas sur l'extension. Un parcours téléchargé arrive
+     * volontiers en `.xml`, sans extension, ou renommé par le navigateur — et
+     * refuser sur le nom priverait le joueur d'un fichier parfaitement
+     * lisible. Le seul juge est le contenu : `readGpxFile` lève si la trace
+     * n'est pas exploitable, et c'est ce message-là qui est utile.
+     */
     const { name, points } = await readGpxFile(file);
     const { routes: next, stored } = addToLibrary(storage, { name, loop, points });
     imported.value = next;

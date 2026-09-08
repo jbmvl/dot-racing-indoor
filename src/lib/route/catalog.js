@@ -18,22 +18,26 @@ import { buildRoutePath } from '../riderScene/routePath.js';
  * @property {string} name
  * @property {string} file       chemin servi en statique.
  * @property {boolean} loop      le parcours se referme sur lui-même.
- * @property {boolean} [synthetic] tracé fabriqué, qui ne suit aucune route.
  */
 
-/** @type {RouteDescriptor[]} */
-export const ROUTES = [
-  {
-    id: 'boucle-demo',
-    name: 'Boucle de démonstration',
-    file: '/routes/boucle-demo.gpx',
-    loop: true,
-    synthetic: true,
-  },
-];
+/**
+ * Les parcours livrés avec l'application.
+ *
+ * Vide pour l'instant, et ce n'est pas un oubli : le parcours de démonstration
+ * qui l'occupait était un cercle synthétique qui ne suivait aucune route, et il
+ * a fait son office. Y remettre de vrais tracés demande de régler la question
+ * des droits — une trace publiée par un club ou un site de parcours ne se
+ * redistribue pas dans un dépôt public par défaut.
+ *
+ * En attendant, tout passe par l'import : le joueur dépose son propre GPX, qui
+ * reste dans son navigateur.
+ *
+ * @type {RouteDescriptor[]}
+ */
+export const ROUTES = [];
 
 export function findRoute(id) {
-  return ROUTES.find((route) => route.id === id) || ROUTES[0];
+  return ROUTES.find((route) => route.id === id) || ROUTES[0] || null;
 }
 
 /**
@@ -78,7 +82,15 @@ export function pathFromRawPoints(rawPoints) {
 export async function readGpxFile(file) {
   if (!file) throw new Error('aucun fichier');
   const text = await file.text();
-  const points = routePointsFromGpx(text);
+  let points;
+  try {
+    points = routePointsFromGpx(text);
+  } catch (e) {
+    // Le nom du fichier est ce que le joueur a sous les yeux : le citer évite
+    // le « ça ne marche pas » sans savoir lequel des trois fichiers déposés a
+    // été refusé.
+    throw new Error(`« ${file.name} » n’est pas un GPX lisible (${e.message})`);
+  }
   // `buildRoutePoints` a déjà validé que le tracé tient debout ; on le refait
   // ici pour refuser tout de suite un fichier inexploitable, plutôt que de le
   // ranger et d'échouer au moment de rouler.

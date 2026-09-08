@@ -17,6 +17,13 @@
     "TIME": "Time",
     "LAPS": "Laps",
     "KEYBOARD_HINT": "↑ / ↓ to set speed",
-    "SYNTHETIC_ROUTE": "Demo track: it does not follow any road."
+    "SYNTHETIC_ROUTE": "Demo track: it does not follow any road.",
+    "IMPORT_GPX": "Import a GPX",
+    "IMPORT_HINT": "Or drop a .gpx file anywhere on this page.",
+    "IMPORT_VOLATILE": "Route usable now, but not saved: browser storage is full or unavailable.",
+    "IMPORTED": "imported",
+    "DEMO": "demo",
+    "REMOVE_ROUTE": "Remove this route",
+    "CHANGE_ROUTE": "Change route"
   }
 }

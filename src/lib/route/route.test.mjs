@@ -72,6 +72,78 @@ test('une coordonnée hors du monde est écartée, pas convertie', () => {
   assert.equal(parseGpxTrackPoints(gpx).length, 2);
 });
 
+test('lat et lon se lisent dans n’importe quel ordre', () => {
+  // Rien dans GPX n'impose l'ordre, et les exportateurs se partagent les deux
+  // usages. Un fichier « lon d'abord » ne doit pas rendre un tracé vide.
+  const gpx =
+    '<gpx><trkseg><trkpt lon="0" lat="0"><ele>10</ele></trkpt>' +
+    '<trkpt lon="0.001" lat="0"><ele>12</ele></trkpt></trkseg></gpx>';
+  const points = parseGpxTrackPoints(gpx);
+  assert.equal(points.length, 2);
+  assert.equal(points[1].ele, 12);
+});
+
+test('les attributs entre apostrophes se lisent comme les autres', () => {
+  const gpx = "<gpx><trkseg><trkpt lat='0' lon='0'/><trkpt lat='0' lon='0.001'/></trkseg></gpx>";
+  assert.equal(parseGpxTrackPoints(gpx).length, 2);
+});
+
+test('un espace de noms sur les balises ne cache pas la trace', () => {
+  const gpx =
+    '<gpx:gpx><gpx:trkseg><gpx:trkpt lat="0" lon="0"><gpx:ele>5</gpx:ele></gpx:trkpt>' +
+    '<gpx:trkpt lat="0" lon="0.001"><gpx:ele>7</gpx:ele></gpx:trkpt></gpx:trkseg></gpx:gpx>';
+  const points = parseGpxTrackPoints(gpx);
+  assert.equal(points.length, 2);
+  assert.equal(points[1].ele, 7);
+});
+
+test('un fichier qui n’a qu’un itinéraire se lit quand même', () => {
+  // Un site de parcours exporte volontiers un <rte> plutôt qu'un <trk>.
+  const gpx =
+    '<gpx><rte><rtept lat="0" lon="0"><ele>100</ele></rtept>' +
+    '<rtept lat="0" lon="0.002"><ele>110</ele></rtept></rte></gpx>';
+  const points = parseGpxTrackPoints(gpx);
+  assert.equal(points.length, 2);
+  assert.equal(points[0].ele, 100);
+});
+
+test('quand le fichier porte les deux, la trace prime sur l’itinéraire', () => {
+  /*
+   * Un <rte> ne compte souvent qu'une poignée de points de passage, là où le
+   * <trk> porte la polyligne dense. Les concaténer ferait couper le coureur à
+   * travers champs entre deux virages ; il faut choisir, et choisir la trace.
+   */
+  const gpx =
+    '<gpx>' +
+    '<rte><rtept lat="10" lon="10"/><rtept lat="10" lon="10.5"/></rte>' +
+    '<trk><trkseg><trkpt lat="0" lon="0"/><trkpt lat="0" lon="0.001"/>' +
+    '<trkpt lat="0" lon="0.002"/></trkseg></trk>' +
+    '</gpx>';
+  const points = parseGpxTrackPoints(gpx);
+  assert.equal(points.length, 3, 'les trois points de la trace');
+  assert.equal(points[0].lat, 0, 'et pas ceux de l’itinéraire');
+});
+
+test('plusieurs segments se lisent à la suite', () => {
+  const gpx =
+    '<gpx><trk>' +
+    '<trkseg><trkpt lat="0" lon="0"/><trkpt lat="0" lon="0.001"/></trkseg>' +
+    '<trkseg><trkpt lat="0" lon="0.002"/></trkseg>' +
+    '</trk></gpx>';
+  assert.equal(parseGpxTrackPoints(gpx).length, 3);
+});
+
+test('un point sans coordonnée lisible est écarté, il n’interrompt pas la lecture', () => {
+  const gpx =
+    '<gpx><trkseg><trkpt lat="0" lon="0"/><trkpt lat="" lon="abc"/>' +
+    '<trkpt lat="0" lon="0.001"/></trkseg></gpx>';
+  assert.equal(parseGpxTrackPoints(gpx).length, 2);
+});
+
+test('un GPX qui n’a que des espaces est refusé comme un GPX vide', () => {
+  assert.throws(() => parseGpxTrackPoints('   \n  '), /vide/);
+});
+
 // --- Le lissage de l'altitude -----------------------------------------------
 
 test('le lissage noie le bruit du GPS : un faux relief redevient plat', () => {

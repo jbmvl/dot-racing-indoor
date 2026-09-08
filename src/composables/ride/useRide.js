@@ -20,7 +20,6 @@
 
 import { ref, shallowRef, onBeforeUnmount } from 'vue';
 import { createRideState } from '@/lib/ride/rideState.js';
-import { loadRoute, findRoute } from '@/lib/route/catalog.js';
 
 /** Vitesse de départ et bornes du pilote clavier, en km/h. */
 export const KEYBOARD_START_KMH = 28;
@@ -49,11 +48,20 @@ export function useRide() {
   let lastPublishMs = 0;
   let elapsed = 0;
 
-  async function load(routeId) {
+  /**
+   * Démarre une séance sur un parcours déjà résolu.
+   *
+   * La résolution n'appartient pas à ce composable : un parcours peut venir
+   * d'un fichier livré ou du dépôt du navigateur, et la séance n'a aucune
+   * raison de connaître cette différence — cf. `useRouteLibrary`.
+   *
+   * @param {() => Promise<{descriptor: Object, path: Object}>} resolver
+   */
+  async function load(resolver) {
     status.value = 'loading';
     errorMessage.value = '';
     try {
-      const loaded = await loadRoute(findRoute(routeId));
+      const loaded = await resolver();
       ride = createRideState({ path: loaded.path, loop: loaded.descriptor.loop });
       route.value = loaded.descriptor;
       targetSpeedMs = (KEYBOARD_START_KMH * 1000) / 3600;

@@ -17,6 +17,13 @@
     "TIME": "Temps",
     "LAPS": "Tours",
     "KEYBOARD_HINT": "↑ / ↓ pour régler la vitesse",
-    "SYNTHETIC_ROUTE": "Tracé de démonstration : il ne suit aucune route."
+    "SYNTHETIC_ROUTE": "Tracé de démonstration : il ne suit aucune route.",
+    "IMPORT_GPX": "Importer un GPX",
+    "IMPORT_HINT": "Ou glissez un fichier .gpx n’importe où sur cette page.",
+    "IMPORT_VOLATILE": "Parcours utilisable maintenant, mais non conservé : le stockage du navigateur est plein ou indisponible.",
+    "IMPORTED": "importé",
+    "DEMO": "démo",
+    "REMOVE_ROUTE": "Retirer ce parcours",
+    "CHANGE_ROUTE": "Changer de parcours"
   }
 }

@@ -33,9 +33,58 @@ import { metersBetween } from '../riderScene/routePath.js';
 /** Demi-fenêtre de lissage de l'altitude, en mètres. */
 export const ALTITUDE_WINDOW_M = 50;
 
-const TRKPT = /<trkpt\b[^>]*\blat\s*=\s*"([^"]+)"[^>]*\blon\s*=\s*"([^"]+)"[^>]*>([\s\S]*?)<\/trkpt>/gi;
-const TRKPT_SELF_CLOSING = /<trkpt\b[^>]*\blat\s*=\s*"([^"]+)"[^>]*\blon\s*=\s*"([^"]+)"[^>]*\/>/gi;
-const ELE = /<ele>\s*(-?[\d.eE+]+)\s*<\/ele>/i;
+/*
+ * Les motifs de lecture. Trois précautions, chacune payée par un fichier réel
+ * qui, sans elle, ne se lit pas :
+ *
+ * 1. **`lat` et `lon` dans n'importe quel ordre.** Rien dans GPX n'impose que
+ *    `lat` vienne avant `lon`, et les exportateurs se partagent les deux
+ *    usages. Les attributs sont donc cherchés séparément, jamais dans une
+ *    séquence figée.
+ * 2. **Un préfixe d'espace de noms possible** (`<gpx:trkpt>`), que certains
+ *    outils émettent.
+ * 3. **`rtept` autant que `trkpt`.** Un site de parcours exporte volontiers un
+ *    *itinéraire* (`<rte>`) plutôt qu'une *trace* (`<trk>`). Les deux décrivent
+ *    une polyligne ; seule la densité de points change.
+ */
+const POINT_OPEN = (kind) => new RegExp(`<(?:[\\w.-]+:)?${kind}\\b([^>]*)>`, 'gi');
+const LAT_ATTR = /\blat\s*=\s*["']([^"']+)["']/i;
+const LON_ATTR = /\blon\s*=\s*["']([^"']+)["']/i;
+const ELE_TAG = /<(?:[\w.-]+:)?ele\s*>\s*(-?[\d.]+(?:[eE][+-]?\d+)?)\s*</i;
+
+/**
+ * Balaie un type de point (`trkpt` ou `rtept`) et rend ce qui est exploitable.
+ *
+ * Le corps d'un point va de sa balise ouvrante jusqu'à l'ouverture du suivant :
+ * c'est ce qui permet de lire son `<ele>` sans avoir à distinguer la forme
+ * fermée `<trkpt …>…</trkpt>` de la forme auto-fermante `<trkpt … />`, et sans
+ * dépendre d'un `</trkpt>` que certains fichiers indentent bizarrement.
+ *
+ * @returns {Array<{lng:number, lat:number, ele:number|null}>}
+ */
+function scanPoints(text, kind) {
+  const opens = [];
+  const pattern = POINT_OPEN(kind);
+  for (let m = pattern.exec(text); m; m = pattern.exec(text)) {
+    opens.push({ attrs: m[1], bodyStart: m.index + m[0].length });
+  }
+
+  const points = [];
+  for (let i = 0; i < opens.length; i++) {
+    const { attrs, bodyStart } = opens[i];
+    const lat = Number(LAT_ATTR.exec(attrs)?.[1]);
+    const lng = Number(LON_ATTR.exec(attrs)?.[1]);
+    // Un point sans coordonnée lisible, ou hors du monde, est écarté : il n'y a
+    // rien à en tirer, et le deviner serait pire que de l'ignorer.
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) continue;
+
+    const bodyEnd = i + 1 < opens.length ? opens[i + 1].bodyStart : text.length;
+    const ele = Number(ELE_TAG.exec(text.slice(bodyStart, bodyEnd))?.[1]);
+    points.push({ lng, lat, ele: Number.isFinite(ele) ? ele : null });
+  }
+  return points;
+}
 
 /**
  * Extrait les points de trace d'un GPX.
@@ -45,24 +94,16 @@ const ELE = /<ele>\s*(-?[\d.eE+]+)\s*<\/ele>/i;
  * @throws {Error} si aucun point exploitable n'est trouvé.
  */
 export function parseGpxTrackPoints(text) {
-  if (typeof text !== 'string' || text.length === 0) throw new Error('GPX vide');
+  if (typeof text !== 'string' || text.trim().length === 0) throw new Error('GPX vide');
 
-  const points = [];
-  const push = (latRaw, lngRaw, body) => {
-    const lat = Number(latRaw);
-    const lng = Number(lngRaw);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
-    const eleMatch = body ? ELE.exec(body) : null;
-    const ele = eleMatch ? Number(eleMatch[1]) : NaN;
-    points.push({ lng, lat, ele: Number.isFinite(ele) ? ele : null });
-  };
-
-  TRKPT.lastIndex = 0;
-  for (let m = TRKPT.exec(text); m; m = TRKPT.exec(text)) push(m[1], m[2], m[3]);
-
-  TRKPT_SELF_CLOSING.lastIndex = 0;
-  for (let m = TRKPT_SELF_CLOSING.exec(text); m; m = TRKPT_SELF_CLOSING.exec(text)) push(m[1], m[2], null);
+  /*
+   * La trace prime sur l'itinéraire quand le fichier porte les deux. Un `<trk>`
+   * est une polyligne dense — le relevé, ou le calage sur les routes ; un
+   * `<rte>` n'est souvent qu'une poignée de points de passage. Les mélanger
+   * donnerait un tracé qui coupe à travers champs entre deux virages.
+   */
+  const track = scanPoints(text, 'trkpt');
+  const points = track.length >= 2 ? track : scanPoints(text, 'rtept');
 
   if (points.length < 2) throw new Error('GPX sans trace exploitable (moins de deux points)');
   return points;

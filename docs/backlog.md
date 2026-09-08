@@ -22,12 +22,25 @@ issues sans retravail.
 - [x] Tableau de bord : vitesse, distance, pente, temps
 - [x] Pilote clavier provisoire (`↑` / `↓`)
 
-## L2 — De vrais parcours
+## L2 — De vrais parcours — **en partie**
 
-- [ ] Remplacer `boucle-demo.gpx` par deux ou trois GPX réels qui suivent des routes
-- [ ] Vérifier le lissage d'altitude sur ces tracés-là : la fenêtre de 50 m a été réglée sur du bruit simulé, pas sur un vrai relevé
-- [ ] Écran de choix du parcours (`NavTabs` est déjà là)
-- [ ] Profil altimétrique : reprendre `ElevationProfileBottomPanel.vue` + `useElevationProfile.js` de Dot Racing, garder le rendu Chart.js, réécrire la source de données autour du `RoutePath`
+- [x] Lecteur GPX durci pour les fichiers du monde réel : `lat`/`lon` dans
+      n'importe quel ordre (rien ne l'impose, et les exportateurs se partagent
+      les deux usages), préfixes d'espace de noms, apostrophes, segments
+      multiples, et `<rte>` accepté quand il n'y a pas de `<trk>`
+- [x] Import de GPX dans l'application : sélecteur de fichier et
+      glisser-déposer, parcours rangés dans le navigateur (`lib/route/library.js`)
+- [x] Écran de choix du parcours (`RoutePicker.vue`)
+- [ ] **Déposer deux ou trois vrais GPX dans `public/routes/`** et les déclarer
+      dans `lib/route/catalog.js`. Non fait : l'environnement de développement
+      n'a pas d'accès sortant vers les sites de parcours (bloqué par la
+      politique réseau). L'import rend l'attente indolore, mais l'application
+      livrée n'a toujours qu'un tracé synthétique
+- [ ] Vérifier le lissage d'altitude sur de vrais relevés : la fenêtre de 50 m
+      a été réglée sur du bruit simulé, pas sur un GPS de vélo
+- [ ] Profil altimétrique : reprendre `ElevationProfileBottomPanel.vue` +
+      `useElevationProfile.js` de Dot Racing, garder le rendu Chart.js,
+      réécrire la source de données autour du `RoutePath`
 - [ ] Marquer la position courante sur le profil
 
 ## L3 — La physique
@@ -71,7 +84,8 @@ issues sans retravail.
 
 | | |
 |---|---|
-| Le parcours livré est synthétique | il ne suit aucune route ; le lot 2 le remplace |
+| Le parcours **livré** est synthétique | il ne suit aucune route. L'import de GPX contourne le problème, mais ne le règle pas : un visiteur qui arrive sans fichier ne voit que lui |
+| Pas d'accès sortant vers les sites de parcours | la politique réseau de l'environnement de développement bloque le téléchargement de GPX ; ils doivent être déposés à la main |
 | Trois tests de Dot Racing n'ont pas été repris | ils couvraient `routeAnchor`, `motionDiagnostics` et `vectorSourceConfig`, modules qui n'ont pas de raison d'être ici (51 tests là-bas → 42 repris ici) |
 | Pas de test bout-en-bout du mouvement | celui de Dot Racing reposait sur l'ancre de tracé ; il faudra en écrire un autre, autour de physique → distance → tracé → assiette |
 | CGU des tuiles Carto non vérifiées | à faire avant d'ouvrir au public |

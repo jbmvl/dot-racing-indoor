@@ -9,7 +9,7 @@
  * connaît qu'un `RoutePath`.
  */
 
-import { routePointsFromGpx } from './gpx.js';
+import { routePointsFromGpx, buildRoutePoints } from './gpx.js';
 import { buildRoutePath } from '../riderScene/routePath.js';
 
 /**
@@ -50,4 +50,47 @@ export async function loadRoute(descriptor, { signal } = {}) {
   const path = buildRoutePath(routePointsFromGpx(await response.text()));
   if (!path) throw new Error('parcours inexploitable');
   return { descriptor, path };
+}
+
+/**
+ * Construit un tracé depuis des coordonnées brutes — celles que le dépôt de
+ * parcours importés conserve (`library.js`).
+ *
+ * Le lissage d'altitude est appliqué **ici**, à chaque chargement, et non une
+ * fois pour toutes au dépôt : c'est un réglage du moteur, et une correction de
+ * ce réglage doit profiter aux parcours déjà déposés.
+ *
+ * @param {Array<{lng:number, lat:number, ele:number|null}>} rawPoints
+ * @returns {import('../riderScene/routePath.js').RoutePath}
+ */
+export function pathFromRawPoints(rawPoints) {
+  const path = buildRoutePath(buildRoutePoints(rawPoints));
+  if (!path) throw new Error('parcours inexploitable');
+  return path;
+}
+
+/**
+ * Lit un fichier GPX déposé par le joueur.
+ *
+ * @param {File} file
+ * @returns {Promise<{name: string, points: Array}>}
+ */
+export async function readGpxFile(file) {
+  if (!file) throw new Error('aucun fichier');
+  const text = await file.text();
+  const points = routePointsFromGpx(text);
+  // `buildRoutePoints` a déjà validé que le tracé tient debout ; on le refait
+  // ici pour refuser tout de suite un fichier inexploitable, plutôt que de le
+  // ranger et d'échouer au moment de rouler.
+  pathFromRawPoints(points);
+  const name = nameFromGpx(text) || file.name.replace(/\.gpx$/i, '');
+  return { name, points };
+}
+
+const GPX_NAME = /<(?:[\w.-]+:)?name\s*>\s*([^<]{1,120}?)\s*<\//i;
+
+/** Le nom que le fichier se donne, s'il s'en donne un. */
+export function nameFromGpx(text) {
+  const found = GPX_NAME.exec(String(text || ''));
+  return found ? found[1].trim() : null;
 }

@@ -17,6 +17,57 @@ en revanche imposé sa convention de dossiers, alors que l'objectif explicite
 est de reprendre les composants de Dot Racing — lui aussi Vite + Vue — sans les
 retoucher.
 
+## Mettre en ligne, concrètement
+
+### 1. La branche de production
+
+Vercel déploie la **branche de production**, `main` par défaut — et `main` ne
+contient aujourd'hui qu'un README. Importer le dépôt tel quel déploierait donc
+une page vide. Deux options :
+
+- fusionner `claude/indoor-mvp` dans `main` (le plus simple, et c'est la
+  destination naturelle) ;
+- ou, dans *Settings → Git → Production Branch*, désigner
+  `claude/indoor-mvp`.
+
+Les autres branches produiront de toute façon des déploiements de
+prévisualisation, avec une URL par poussée.
+
+### 2. L'import
+
+Sur vercel.com : *Add New → Project*, choisir le dépôt, laisser tous les
+réglages par défaut. `vercel.json` dit déjà tout ce qu'il faut (préréglage
+Vite, `dist/`, renvoi des routes vers `index.html`). Aucune variable
+d'environnement n'est nécessaire pour démarrer.
+
+En ligne de commande, si on préfère :
+
+```bash
+npx vercel@latest link      # rattache le dossier au projet
+npx vercel@latest --prod    # déploie
+```
+
+### 3. Le piège qui aurait fait échouer la build
+
+`worldpaint` est une dépendance Git. Écrite en raccourci
+(`github:jbmvl/worldpaint#main`), npm la réécrit dans le lockfile en
+`git+ssh://git@github.com/…` — et `npm ci` échoue alors sur Vercel, faute de
+clé SSH sur la machine de build. Le symptôme est un `Permission denied
+(publickey)` en plein `npm ci`, qui n'a rien à voir avec le code.
+
+La dépendance est donc déclarée comme une **archive HTTPS figée sur un
+commit** :
+
+```json
+"worldpaint": "https://github.com/jbmvl/worldpaint/archive/<sha>.tar.gz"
+```
+
+Trois bénéfices d'un coup : plus de git ni de SSH sur la machine de build, une
+empreinte d'intégrité dans le lockfile, et une version figée — deux builds à
+six mois d'écart installent le même décor. Le prix à payer est qu'une
+correction dans `worldpaint` ne descend plus toute seule : il faut remplacer le
+SHA et relancer `npm install`. C'est la contrepartie voulue.
+
 ## La contrainte qui décidera du multijoueur
 
 Une fonction serverless (Vercel, Netlify) **ne peut pas tenir une connexion

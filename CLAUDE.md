@@ -32,10 +32,19 @@ Le générateur de paysage vit dans son propre dépôt,
 dépendance Git. Donc **toujours** `import { … } from 'worldpaint'`, jamais un
 chemin relatif ni `@/`.
 
+La dépendance est **figée sur un commit**, et déclarée comme une archive
+HTTPS plutôt qu'en raccourci `github:` — npm réécrit ce raccourci en
+`git+ssh://` dans le lockfile, ce qui fait échouer `npm ci` sur toute machine
+de build sans clé SSH :
+
+```json
+"worldpaint": "https://github.com/jbmvl/worldpaint/archive/<sha>.tar.gz"
+```
+
 Pour corriger le décor : cloner `worldpaint` à part, faire le changement
-là-bas avec son test, publier un commit, puis mettre à jour la référence dans
-`package.json`. Rien de ce dépôt n'est importé par `worldpaint`, et three.js
-lui est injecté, jamais importé par lui.
+là-bas avec son test, publier un commit, puis remplacer le SHA ci-dessus et
+relancer `npm install` pour que le lockfile suive. Rien de ce dépôt n'est
+importé par `worldpaint`, et three.js lui est injecté, jamais importé par lui.
 
 ## Ce qui vient de Dot Racing
 

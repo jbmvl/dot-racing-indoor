@@ -35,5 +35,19 @@
     "CONTROL_ACTIVE": "The gradient drives the resistance.",
     "CONTROL_UNAVAILABLE": "This machine cannot simulate a gradient: resistance stays its own.",
     "CONTROL_DENIED": "The machine refused resistance control."
+  },
+  "ROOM": {
+    "TITLE": "Ride together",
+    "NAME_LABEL": "Your name",
+    "NAME_PLACEHOLDER": "Name",
+    "STANDINGS": "Standings",
+    "MORE": "+{count} more",
+    "HINT": "One room per route: riding together means the same GPX file.",
+    "TRUST": "Everyone reports their own position: the standings run on good faith.",
+    "UNCONFIGURED": "No room server configured: the ride stays solo.",
+    "CONNECTING": "Joining the room…",
+    "RETRYING": "Room unreachable, trying again…",
+    "ALONE": "Nobody else on this route right now.",
+    "RIDERS": "{count} in the room"
   }
 }

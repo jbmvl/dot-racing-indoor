@@ -22,6 +22,13 @@
  * rattraper. Ces trois organes ne sont pas « pas encore branchés » : ils n'ont
  * pas lieu d'être, et les rebrancher serait une régression.
  *
+ * Cela vaut pour le **coureur local**, et pour lui seul. Les autres joueurs,
+ * eux, arrivent bien par un flux — quatre diffusions par seconde — et ont donc
+ * besoin de tout ce dont lui n'a que faire : une horloge de lecture, un retard
+ * assumé, une interpolation. C'est `riderCrowd` qui s'en charge, avec sa propre
+ * horloge par coureur ; la scène ne fait que lui donner le rythme (cf.
+ * `CROWD_CLOCK`) et l'avancer à chaque image.
+ *
  * Ce qui reste de leur héritage tient en une ligne, et il faut la garder : le
  * **cap est lissé**. Il vient de la tangente du tracé, qui change par paliers
  * à chaque sommet de la polyligne ; sans lissage, le vélo se braquerait par
@@ -42,7 +49,7 @@ import {
 import { RiderModel } from '@/lib/riderScene/riderModel.js';
 import { createRiderPose, attitudeFromGround } from '@/lib/riderScene/riderPose.js';
 import { normalizeBearing, shortestAngleDelta } from '@/lib/riderScene/raceClock.js';
-import { offsetBy } from '@/lib/riderScene/riderCrowd.js';
+import { offsetBy, RiderCrowd } from '@/lib/riderScene/riderCrowd.js';
 import {
   BUBBLE_ZOOM,
   BUBBLE_TILES,
@@ -65,6 +72,33 @@ const RECENTER_INTERVAL_MS = 700;
 /** Empattement et largeur d'appui du vélo, en mètres — cf. `sampleContact`. */
 const CONTACT_SPAN_M = 1.05;
 const CONTACT_WIDTH_M = 0.9;
+
+/**
+ * Horloge de lecture de la foule, réglée pour un flux **entre joueurs**.
+ *
+ * Les valeurs par défaut de `raceClock` visent un moteur qui diffuse toutes les
+ * cinq secondes : elles imposent quatre secondes de retard de lecture, ce qui
+ * est exactement ce qu'il faut là-bas et absurde ici — à 30 km/h, ce serait
+ * trente mètres d'erreur sur la position du voisin de roue. Avec une diffusion
+ * tous les quarts de seconde, un tiers de seconde de retard suffit à rester
+ * dans la partie interpolée de la chronologie.
+ */
+const CROWD_CLOCK = {
+  expectedGapS: 0.25,
+  minLagS: 0.35,
+  maxLagS: 2,
+  // Prolongation : ce qu'on continue d'afficher quand le flux d'un coureur se
+  // tarit. Quelques secondes, pas quinze — au-delà, il aura été périmé.
+  maxAheadS: 3,
+  holdS: 1.5,
+  fadeS: 1.5,
+  seedSpanS: 1,
+  historyS: 30,
+};
+
+/** Réévaluation de l'appartenance à la bulle : huit fois par seconde suffisent
+ *  pour un flux qui en porte quatre. */
+const CROWD_SYNC_INTERVAL_MS = 125;
 
 /**
  * Danseuse — feedback visuel d'une accélération. Dot Racing la déclenchait sur
@@ -95,6 +129,9 @@ const DANCE_SMOOTHING = 4;
  * @param {() => number|undefined} [options.getPowerW] Puissance instantanée, en
  *        watts. Elle ne sert qu'aux jambes : à zéro, elles s'arrêtent net (roue
  *        libre). Inconnue, le pédalage se déduit de la vitesse.
+ * @param {() => Array} [options.getParticipations] Les autres coureurs de la
+ *        salle, dans la forme que lit `riderCrowd`. Lue à chaque image, comme
+ *        la séance : la foule n'a rien de réactif.
  * @param {() => string|undefined} [options.getRiderColor]
  * @param {() => Date} [options.getDate] Heure du ciel. Par défaut, l'heure réelle.
  * @param {() => Object|undefined} [options.getWeather] Météo au format worldpaint.
@@ -106,6 +143,7 @@ export function useRideScene({
   paused: pausedRef = null,
   onFrame = null,
   getPowerW = () => undefined,
+  getParticipations = null,
   getRiderColor = () => undefined,
   getDate = () => new Date(),
   getWeather = () => undefined,
@@ -122,6 +160,8 @@ export function useRideScene({
   let camera = null;
   let world = null;
   let rider = null;
+  let crowd = null;
+  let sinceCrowdSyncMs = 0;
   let resizeObserver = null;
   let frameId = null;
   let lastFrameTime = 0;
@@ -239,6 +279,9 @@ export function useRideScene({
       renderer.setClearColor(world.clearColor, 1);
 
       rider = new RiderModel({ THREE, scene, color: getRiderColor?.() });
+      // La foule n'existe que s'il y a un flux : sans salle, pas un objet de
+      // plus dans la scène.
+      crowd = getParticipations ? new RiderCrowd({ THREE, scene, clock: CROWD_CLOCK }) : null;
       smoothBearing = normalizeBearing(start.bearing ?? 0);
       seenLaps = getRide?.()?.laps ?? 0;
       pose.seat();
@@ -410,9 +453,38 @@ export function useRideScene({
     // Le coureur s'allume sur la même mesure de nuit que le décor, sans quoi
     // ses feux basculeraient à contretemps des fenêtres.
     rider.setNight(sky.nightMix, camera.position.distanceTo(rider.group.position));
+    advanceCrowd(delta, at, sky.nightMix);
 
     renderer.setClearColor(sky.clearColor, 1);
     renderer.render(scene, camera);
+  }
+
+  /**
+   * Les autres coureurs : qui est dans la bulle, et où chacun en est.
+   *
+   * Deux rythmes, comme le reste de la scène. L'appartenance à la bulle est
+   * une entrée-sortie coûteuse (quelques dizaines de géométries montées ou
+   * libérées) : elle se réévalue huit fois par seconde. Le mouvement, lui, se
+   * joue à chaque image, sinon le peloton avancerait par paliers visibles.
+   */
+  function advanceCrowd(delta, at, nightMix) {
+    if (!crowd || !world?.bubble) return;
+
+    sinceCrowdSyncMs += delta * 1000;
+    if (sinceCrowdSyncMs >= CROWD_SYNC_INTERVAL_MS) {
+      sinceCrowdSyncMs = 0;
+      // Pas de `focusId` : le coureur local n'est jamais dans le flux qu'on
+      // reçoit — son propre écho est écarté à l'arrivée (cf. `useRoom`).
+      crowd.sync(getParticipations?.() ?? [], { lng: at.lng, lat: at.lat }, null);
+    }
+
+    crowd.advance(delta, {
+      bubble: world.bubble,
+      roadLift: ROAD_LIFT_M,
+      nightMix,
+      bearingToYaw,
+      camera,
+    });
   }
 
   /**
@@ -525,6 +597,7 @@ export function useRideScene({
     canvasRef.value?.removeEventListener('webglcontextlost', handleContextLost);
 
     rider?.dispose();
+    crowd?.dispose();
     world?.dispose();
 
     if (renderer) {
@@ -536,6 +609,8 @@ export function useRideScene({
     }
 
     rider = null;
+    crowd = null;
+    sinceCrowdSyncMs = 0;
     world = null;
     renderer = null;
     scene = null;

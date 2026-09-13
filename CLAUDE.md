@@ -65,7 +65,14 @@ Conséquence pratique, et elle revient souvent : l'horloge de course, le suiveur
 de distance et l'ancre de tracé de Dot Racing n'ont pas lieu d'être pour le
 coureur local. Les rebrancher serait une régression, pas un rattrapage.
 (`raceClock.js` reste présent parce que la **foule** — les autres joueurs, dont
-les positions arrivent bien par un flux — s'en sert.)
+les positions arrivent bien par un flux — s'en sert. Ses réglages par défaut
+visent en revanche un moteur qui diffuse toutes les cinq secondes ; la scène lui
+donne les siens, taillés pour un flux à 4 Hz — cf. `CROWD_CLOCK`.)
+
+Le multijoueur ne reprend pas cette règle au client : le serveur de salles
+(`multiplayer/`) **recopie** les positions, il n'en calcule aucune. C'est
+trichable, c'est assumé, et l'interface le dit — cf.
+[`docs/multijoueur.md`](docs/multijoueur.md).
 
 ## Deux formats de points, et c'est là que ça casse
 

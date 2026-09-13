@@ -68,27 +68,29 @@ six mois d'écart installent le même décor. Le prix à payer est qu'une
 correction dans `worldpaint` ne descend plus toute seule : il faut remplacer le
 SHA et relancer `npm install`. C'est la contrepartie voulue.
 
-## La contrainte qui décidera du multijoueur
+## La contrainte qui a décidé du multijoueur — tranchée
 
 Une fonction serverless (Vercel, Netlify) **ne peut pas tenir une connexion
-ouverte**. Elle répond à une requête et meurt. Le serveur WebSocket qu'un jeu
-temps réel demande — une salle, des positions qui circulent plusieurs fois par
-seconde — n'a donc pas sa place à côté du site.
+ouverte**. Elle répond à une requête et meurt. Le serveur qu'un jeu temps réel
+demande — une salle, des positions qui circulent plusieurs fois par seconde —
+n'a donc pas sa place à côté du site.
 
-Trois sorties, à trancher au lot 5 :
+Trois sorties étaient ouvertes ; c'est **Cloudflare Durable Objects** qui a été
+retenu, et non Supabase comme le supposait la recommandation d'alors. La raison
+a pesé plus lourd que l'économie d'un futur chantier : le client n'a ainsi
+**aucune dépendance** — une salle se rejoint avec le `WebSocket` du navigateur
+et des trames JSON de cent octets, sur une page qui porte déjà sept cents
+kilo-octets de moteur 3D. Le transport tient derrière `useRoom`, et se remplace
+sans toucher au reste.
 
-| | Ce que ça donne | Ce que ça coûte |
-|---|---|---|
-| **Supabase** (Realtime + Postgres + Auth) | diffusion et présence sur WebSocket, plus les comptes et l'historique des séances dans la foulée | une dépendance de plus, et un modèle de données à tenir |
-| **Cloudflare Durable Objects** | une salle = un objet, exactement la forme du problème ; très bon marché | un second environnement de déploiement à côté du site |
-| **Un VPS avec `ws`** | contrôle total, rien à apprendre | à exploiter et à surveiller soi-même — précisément ce qu'on cherchait à éviter |
+Le serveur vit dans `multiplayer/`, se déploie par `npx wrangler deploy`, et
+n'a aucune dépendance npm. Les comptes et l'historique du lot 6 ne demandent
+rien de temps réel : Supabase peut parfaitement s'installer à côté le jour où
+ils arriveront. Tous les détails — protocole, salles, ce qui reste à vérifier —
+sont dans [`multijoueur.md`](multijoueur.md).
 
-Recommandation : **Supabase**, parce qu'il règle en même temps les comptes et
-la sauvegarde des séances, qui arrivent de toute façon au lot 6.
-
-Rien de tout cela n'est engagé aujourd'hui : les lots 1 à 4 ne demandent aucun
-serveur, et c'est délibéré. Le multijoueur est la première fonction qui coûte
-de l'infrastructure ; autant que tout le reste tourne avant de la payer.
+Le site, lui, reste une application statique : **sans `VITE_RACE_SERVER`, rien
+ne change**, pas une connexion sortante de plus, et la séance est solo.
 
 ## Variables d'environnement
 
@@ -97,6 +99,7 @@ Préfixe `VITE_` obligatoire pour tout ce que le client lit.
 | | |
 |---|---|
 | `VITE_VECTOR_TILEJSON` | TileJSON de la source vectorielle (schéma OpenMapTiles). Par défaut, Carto. |
+| `VITE_RACE_SERVER` | Serveur de salles (`wss://…`), cf. [`multijoueur.md`](multijoueur.md). Absente, le multijoueur est simplement éteint. |
 
 ## Le point à surveiller
 

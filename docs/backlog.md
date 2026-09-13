@@ -77,31 +77,71 @@ issues sans retravail.
 - [x] Appairage depuis l'écran d'accueil, reprise du clavier si le capteur se
       tait
 - [x] Le clavier reste, et restera : c'est ce qui permet de développer sans vélo
-- [ ] **Rien n'a été essayé avec un vrai capteur.** Le décodage est testé sur
-      des trames construites à la main ; la liaison Bluetooth elle-même ne peut
-      pas l'être sans matériel
+- [x] Repli sur Indoor Bike Data (`0x2AD2`) quand la machine ne publie pas
+      Cycling Power : certains home-trainers récents ne parlent que FTMS, et
+      n'interroger qu'un service les rendait muets alors que l'appairage réussit
+- [x] **Pilotage de la résistance par la pente** (`0x2AD9`, mode simulation).
+      On décrit le monde à la machine — pente, vent, roulement, pénétration —
+      et elle calcule la force : c'est le seul des trois modes FTMS où la même
+      pente donne la même sensation sur deux machines différentes. Le gabarit
+      du coureur part avec, pour qu'elle applique notre modèle et non le sien
+- [x] Rythme d'écriture arbitré (`createGradeWriter`) : trop souvent, la file
+      BLE déborde et la machine applique une pente périmée ; trop rarement,
+      l'autorisation de commande expire au bout d'une minute et la machine
+      cesse d'obéir en pleine côte, sans rien dire
+- [x] `Reset` en quittant : sans lui, le home-trainer reste bloqué sur la
+      dernière pente de la séance
+- [ ] **Rien n'a été essayé avec un vrai capteur, ni avec une vraie machine.**
+      Trames et décisions d'écriture sont testées sur des octets construits à
+      la main ; la liaison Bluetooth elle-même ne peut pas l'être sans matériel
+- [ ] Pente atténuée (le « trainer difficulty » des autres applications) :
+      envoyer la pente réelle rend certains murs inroulables sur un petit
+      braquet. Rien ne l'expose aujourd'hui, la pente part telle quelle
 - [ ] Reconnexion automatique après une coupure (aujourd'hui : retour à l'état
       « non connecté », il faut réappairer)
 - [ ] Étendre `RiderModel.advance` pour accepter une cadence réelle. Il ne
       connaît que le « pace » de Dot Racing (1..10) ou une cadence déduite de la
       vitesse ; avec un capteur, on a mieux
-- [ ] Hors périmètre : FTMS et le pilotage de résistance
 
-## L5 — Multijoueur
+## L5 — Multijoueur — **en partie**
 
-- [ ] Trancher l'hébergement du temps réel — voir [`deploiement.md`](deploiement.md) ; recommandation : Supabase
-- [ ] Une salle par parcours. Chaque client publie `(pseudo, distance, puissance, cap)` à 4 Hz
-- [ ] Client-autoritaire, aucune anti-triche. Acceptable entre gens qui se connaissent, pas pour un classement public — le dire dans l'interface
-- [ ] Brancher `riderCrowd.js` sur ce flux : il attend déjà position et cap, et plafonne à huit coureurs, sans ombre ni lumière (le nombre de lumières fait partie de la clé de programme des shaders — un coureur qui entrerait avec ses feux recompilerait tous les matériaux du décor)
-- [ ] Interpolation entre deux diffusions : `raceClock.js` est déjà là pour ça, et `riderCrowd` s'en sert déjà
-- [ ] Classement live : reprendre `Leaderboard.vue` et `LeaderboardPopin.vue`
+- [x] Hébergement tranché : **Cloudflare Durable Objects**, et non Supabase
+      comme le supposait la recommandation. Le client n'a ainsi aucune
+      dépendance — le `WebSocket` du navigateur et des trames JSON suffisent —
+      et le transport tient derrière `useRoom`. Supabase reste disponible pour
+      les comptes du lot 6, qui ne demandent rien de temps réel. Serveur dans
+      `multiplayer/`, détails dans [`multijoueur.md`](multijoueur.md)
+- [x] Une salle par parcours, sans code d'invitation : la salle **est**
+      l'empreinte géométrique du tracé, donc deux personnes qui importent le
+      même GPX s'y retrouvent sans s'être rien dit
+- [x] Chaque client publie `(pseudo, distance, puissance)` à 4 Hz. Le cap et
+      les coordonnées n'y sont pas : la salle étant un parcours, une abscisse
+      suffit à retrouver position, cap et pente par `RoutePath.positionAt` —
+      moins d'octets, et les autres restent sur la chaussée dans les virages
+- [x] Client-autoritaire, aucune anti-triche. Dit sur l'écran d'accueil
+- [x] `riderCrowd.js` branché sur ce flux, sans ombre ni lumière
+- [x] Interpolation entre deux diffusions par `raceClock.js`, avec ses propres
+      constantes : les valeurs par défaut visent un moteur qui diffuse toutes
+      les cinq secondes et imposeraient quatre secondes de retard — trente
+      mètres d'erreur sur le voisin de roue
+- [x] Classement live (`RaceStandings.vue`). Écrit ici plutôt que repris de
+      Dot Racing : `Leaderboard.vue` y est adossé à l'API de course et à ses
+      participations, dont rien n'existe ici
+- [ ] **Rien n'a été essayé à plusieurs.** Les modules purs sont testés ; la
+      liaison, le rendu du peloton et la reconnexion demandent deux
+      navigateurs et deux personnes
+- [ ] Pas d'avatars ni de chevrons de bord : un coureur hors de la bulle
+      (au-delà de 900 m) n'est indiqué qu'au classement
+- [ ] Pas de salon d'attente ni de départ groupé : on entre et on roule
 
 ## L6 — Finir la boucle
 
-- [ ] Accueil : parcours, pseudo, poids, appairage
+- [ ] Accueil : le poids manque encore (parcours, pseudo et appairage y sont)
 - [ ] Fin de séance : distance, temps, puissance moyenne, dénivelé
 - [ ] Export `.fit` ou `.gpx` — c'est ce qui fait revenir les gens
-- [ ] Comptes et historique (Supabase, si retenu au lot 5)
+- [ ] Comptes et historique. Supabase reste le candidat : le lot 5 n'a rien
+      engagé de ce côté — son serveur de salles ne stocke rien et ne connaît
+      personne
 
 ---
 
@@ -115,3 +155,4 @@ issues sans retravail.
 | Trois tests de Dot Racing n'ont pas été repris | ils couvraient `routeAnchor`, `motionDiagnostics` et `vectorSourceConfig`, modules qui n'ont pas de raison d'être ici (51 tests là-bas → 42 repris ici) |
 | Pas de test bout-en-bout du mouvement | celui de Dot Racing reposait sur l'ancre de tracé ; il faudra en écrire un autre, autour de physique → distance → tracé → assiette |
 | CGU des tuiles Carto non vérifiées | à faire avant d'ouvrir au public |
+| Le matériel n'a jamais été branché | ni capteur, ni home-trainer piloté, ni seconde personne dans une salle : tout ce qui touche au Bluetooth et au réseau est vérifié sur des octets et des horloges simulées, jamais en situation |

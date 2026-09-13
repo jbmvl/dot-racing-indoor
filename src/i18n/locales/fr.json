@@ -35,5 +35,19 @@
     "CONTROL_ACTIVE": "La pente pilote la résistance.",
     "CONTROL_UNAVAILABLE": "Ce matériel ne sait pas simuler la pente : la résistance reste la sienne.",
     "CONTROL_DENIED": "La machine a refusé le pilotage de résistance."
+  },
+  "ROOM": {
+    "TITLE": "Rouler ensemble",
+    "NAME_LABEL": "Votre pseudo",
+    "NAME_PLACEHOLDER": "Pseudo",
+    "STANDINGS": "Classement",
+    "MORE": "+{count} autres",
+    "HINT": "Une salle par parcours : rouler ensemble demande le même fichier GPX.",
+    "TRUST": "Chacun annonce lui-même sa position : le classement se joue entre gens de bonne foi.",
+    "UNCONFIGURED": "Aucun serveur de salles configuré : la séance reste solo.",
+    "CONNECTING": "Connexion à la salle…",
+    "RETRYING": "Salle injoignable, nouvelle tentative…",
+    "ALONE": "Personne d’autre sur ce parcours pour l’instant.",
+    "RIDERS": "{count} en salle"
   }
 }

@@ -161,10 +161,21 @@ export function selectCrowd({
  * une entrée dans la bulle, pas une image.
  */
 export class RiderCrowd {
-  constructor({ THREE, scene, max = CROWD_MAX }) {
+  /**
+   * @param {Object} options
+   * @param {Object} [options.clock] Réglages de l'horloge de lecture — cf.
+   *        `CLOCK_DEFAULTS`. Ils ne sont pas cosmétiques : les valeurs par
+   *        défaut sont taillées pour un moteur qui diffuse toutes les cinq
+   *        secondes, et imposent un retard de lecture de quatre secondes. Sur
+   *        un flux entre joueurs, qui arrive quatre fois par seconde, ce
+   *        retard-là mettrait le voisin de roue trente mètres derrière sa
+   *        vraie position. C'est la seule divergence de ce fichier copié.
+   */
+  constructor({ THREE, scene, max = CROWD_MAX, clock = null }) {
     this.THREE = THREE;
     this.scene = scene;
     this.max = max;
+    this.clockOptions = clock;
     /** @type {Map<string, Object>} un coureur monté, par identifiant. */
     this.riders = new Map();
     this.disposed = false;
@@ -315,7 +326,7 @@ export class RiderCrowd {
       id,
       participation,
       model,
-      clock: createRaceClock(),
+      clock: createRaceClock(this.clockOptions || undefined),
       meter: createMotionMeter(),
       lateral: lateralOffsetFor(id),
       lean: 0,

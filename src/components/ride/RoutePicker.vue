@@ -32,6 +32,21 @@
         </li>
       </ul>
 
+      <div v-if="room.configured" class="route-picker__room">
+        <label class="route-picker__label" for="rider-name">{{ $t('ROOM.NAME_LABEL') }}</label>
+        <input
+          id="rider-name"
+          v-model="room.name.value"
+          type="text"
+          class="route-picker__name-input"
+          :placeholder="$t('ROOM.NAME_PLACEHOLDER')"
+          maxlength="24"
+          autocomplete="nickname"
+        />
+        <p class="route-picker__hint">{{ $t('ROOM.HINT') }}</p>
+        <p class="route-picker__hint">{{ $t('ROOM.TRUST') }}</p>
+      </div>
+
       <div class="route-picker__trainer">
         <template v-if="trainer.supported">
           <ActionButton v-if="trainer.status.value !== 'connected'" @click="trainer.connect">
@@ -106,6 +121,12 @@ const props = defineProps({
   onImport: { type: Function, required: true },
   /** Résultat de `useTrainer` — l'appairage se fait avant de rouler. */
   trainer: { type: Object, required: true },
+  /*
+   * Résultat de `useRoom`. Le pseudo se donne ici, avant de partir : une fois
+   * en course, il est déjà parti aux autres, et le changer ne servirait qu'à
+   * brouiller un classement en train de se jouer.
+   */
+  room: { type: Object, required: true },
 });
 defineEmits(['choose', 'remove']);
 
@@ -257,6 +278,29 @@ function onDragLeave(event) {
 }
 
 .route-picker__import,
+.route-picker__room {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--c-divider);
+}
+
+.route-picker__label {
+  font-size: 0.78rem;
+  color: var(--c-text-soft);
+}
+
+.route-picker__name-input {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
 .route-picker__trainer {
   padding-top: 1rem;
   border-top: 1px solid var(--c-divider);

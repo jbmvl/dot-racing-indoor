@@ -76,8 +76,13 @@ voit les autres sur la route et au classement.
 
 Il n'y a pas de code d'invitation : **une salle est un parcours**. Elle est
 l'empreinte géométrique du tracé, donc deux personnes qui importent le même GPX
-s'y retrouvent sans s'être rien dit — et rouler ensemble demande le même
-fichier.
+s'y retrouvent sans s'être rien dit.
+
+Pour se retrouver sans avoir le même fichier, il y a le **salon** : déposer un
+GPX propose d'ouvrir une salle, qui apparaît alors sur l'écran d'accueil des
+autres — la rejoindre télécharge son tracé avant de rouler. À dire en face : le
+tracé d'une salle ouverte est téléchargeable par tous ceux qui la voient, et un
+GPX de sortie part souvent de chez soi. L'écran le signale au moment d'ouvrir.
 
 C'est **client-autoritaire** : chacun annonce sa propre position, personne ne
 vérifie. Acceptable entre gens qui se connaissent, pas pour un classement

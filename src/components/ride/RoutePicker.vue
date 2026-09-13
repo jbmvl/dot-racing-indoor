@@ -32,6 +32,25 @@
         </li>
       </ul>
 
+      <div v-if="room.configured && lobby.rooms.value.length" class="route-picker__rooms">
+        <h2 class="route-picker__subtitle">{{ $t('ROOM.OPEN_ROOMS') }}</h2>
+        <ul class="route-picker__list">
+          <li v-for="listed in lobby.rooms.value" :key="listed.id">
+            <button
+              type="button"
+              class="route-picker__route"
+              :disabled="joining"
+              @click="join(listed)"
+            >
+              <span class="route-picker__name">{{ $t('ROOM.HOSTED_BY', { host: listed.host }) }}</span>
+              <span class="route-picker__room-route">{{ listed.name }} · {{ km(listed.distanceM) }}</span>
+            </button>
+          </li>
+        </ul>
+        <p class="route-picker__hint">{{ $t('ROOM.JOIN_HINT') }}</p>
+        <p v-if="joinError" class="route-picker__error" role="alert">{{ joinError }}</p>
+      </div>
+
       <div v-if="room.configured" class="route-picker__room">
         <label class="route-picker__label" for="rider-name">{{ $t('ROOM.NAME_LABEL') }}</label>
         <input
@@ -62,6 +81,17 @@
           <p v-else class="route-picker__hint">{{ $t('TRAINER.OPTIONAL') }}</p>
         </template>
         <p v-else class="route-picker__hint">{{ $t('TRAINER.UNSUPPORTED') }}</p>
+      </div>
+
+      <div v-if="pending" class="route-picker__ask">
+        <p class="route-picker__ask-title">{{ $t('ROOM.ASK_OPEN', { name: pending.name }) }}</p>
+        <p class="route-picker__hint">{{ $t('ROOM.ASK_OPEN_WARN') }}</p>
+        <div class="route-picker__ask-actions">
+          <ActionButton @click="decide(true)">{{ $t('ROOM.OPEN') }}</ActionButton>
+          <button type="button" class="route-picker__ghost" @click="decide(false)">
+            {{ $t('ROOM.RIDE_ALONE') }}
+          </button>
+        </div>
       </div>
 
       <div class="route-picker__import">
@@ -119,6 +149,9 @@ const props = defineProps({
    * message d'erreur ne serait jamais apparu.
    */
   onImport: { type: Function, required: true },
+  /** Rejoindre une salle peut échouer, et pour les mêmes raisons que l'import :
+   *  c'est donc une prop fonction elle aussi, pour que l'échec s'affiche ici. */
+  onJoinRoom: { type: Function, required: true },
   /** Résultat de `useTrainer` — l'appairage se fait avant de rouler. */
   trainer: { type: Object, required: true },
   /*
@@ -127,10 +160,12 @@ const props = defineProps({
    * brouiller un classement en train de se jouer.
    */
   room: { type: Object, required: true },
+  /** Résultat de `useLobby` — les salles que d'autres ont ouvertes. */
+  lobby: { type: Object, required: true },
 });
-defineEmits(['choose', 'remove']);
+const emit = defineEmits(['choose', 'remove']);
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 /*
  * Le pilotage de résistance se dit **ici**, avant de rouler : une machine qui
@@ -149,14 +184,51 @@ const controlMessage = computed(() => {
 const fileInput = ref(null);
 const dragging = ref(false);
 const importError = ref('');
+/** Le parcours qu'on vient de déposer, tant qu'on n'a pas dit quoi en faire. */
+const pending = ref(null);
+const joining = ref(false);
+const joinError = ref('');
 
 async function accept(file) {
   importError.value = '';
   try {
-    await props.onImport(file);
+    const route = await props.onImport(file);
+    /*
+     * Sans serveur de salles, il n'y a pas de question à poser : le parcours
+     * qu'on vient de déposer est celui qu'on veut essayer, et s'arrêter sur un
+     * choix inexistant serait un pas de plus pour rien.
+     */
+    if (props.room.configured) pending.value = route;
+    else emit('choose', route);
   } catch (e) {
     importError.value = e?.message || 'fichier illisible';
   }
+}
+
+/** Ouvrir une salle, ou rouler seul : les deux partent sur le même parcours. */
+function decide(openRoom) {
+  const route = pending.value;
+  pending.value = null;
+  emit('choose', route, { openRoom });
+}
+
+async function join(listed) {
+  joining.value = true;
+  joinError.value = '';
+  try {
+    await props.onJoinRoom(listed);
+  } catch (e) {
+    joinError.value = e?.message || 'salle injoignable';
+  } finally {
+    joining.value = false;
+  }
+}
+
+/** La longueur d'un parcours annoncé. Le dixième de kilomètre suffit à le
+ *  reconnaître, et la virgule décimale n'est pas la même partout. */
+function km(meters) {
+  const number = new Intl.NumberFormat(locale.value, { maximumFractionDigits: 1 });
+  return `${number.format(meters / 1000)} km`;
 }
 
 function onPick(event) {
@@ -275,6 +347,60 @@ function onDragLeave(event) {
   text-align: center;
   font-size: 0.85rem;
   color: var(--c-text-muted);
+}
+
+.route-picker__subtitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--c-text-soft);
+}
+
+.route-picker__rooms {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--c-divider);
+}
+
+.route-picker__room-route {
+  font-size: 0.78rem;
+  color: var(--c-text-muted);
+}
+
+.route-picker__route:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.route-picker__ask {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  background: var(--c-bg-soft);
+}
+
+.route-picker__ask-title {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--c-text);
+}
+
+.route-picker__ask-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.route-picker__ghost {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--c-text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .route-picker__import,

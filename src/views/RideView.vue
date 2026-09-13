@@ -5,8 +5,10 @@
       :routes="library.routes.value"
       :volatile="library.lastImportVolatile.value"
       :on-import="handleImport"
+      :on-join-room="handleJoinRoom"
       :trainer="trainer"
       :room="room"
+      :lobby="lobby"
       @choose="start"
       @remove="library.remove"
     />
@@ -70,7 +72,7 @@
  * appartient en réalité à un composable — c'est la règle que Dot Racing s'est
  * donnée pour `MapViewer`, et elle a bien vieilli.
  */
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import RideScene from '@/components/ride/RideScene.vue';
 import RideHud from '@/components/ride/RideHud.vue';
@@ -82,12 +84,14 @@ import { useRide } from '@/composables/ride/useRide.js';
 import { useRouteLibrary } from '@/composables/ride/useRouteLibrary.js';
 import { useTrainer } from '@/composables/ride/useTrainer.js';
 import { useRoom } from '@/composables/ride/useRoom.js';
+import { useLobby } from '@/composables/ride/useLobby.js';
 
 const { t } = useI18n();
 const library = useRouteLibrary();
 const ride = useRide();
 const trainer = useTrainer();
 const room = useRoom();
+const lobby = useLobby({ name: room.name });
 const started = ref(false);
 
 /*
@@ -126,19 +130,42 @@ const roomLabel = computed(() => {
   if (room.status.value === 'connecting') return t('ROOM.CONNECTING');
   if (room.status.value === 'retrying') return t('ROOM.RETRYING');
   if (room.status.value !== 'connected') return '';
-  return room.riderCount.value > 0
-    ? t('ROOM.RIDERS', { count: room.riderCount.value })
-    : t('ROOM.ALONE');
+  const riders =
+    room.riderCount.value > 0
+      ? t('ROOM.RIDERS', { count: room.riderCount.value })
+      : t('ROOM.ALONE');
+  // Hébergeur : c'est la seule confirmation que l'annonce a bien pris, l'écran
+  // d'accueil étant déjà quitté quand la réponse du salon arrive.
+  return lobby.hosting.value ? `${t('ROOM.HOSTING')} · ${riders}` : riders;
 });
+
+/* La liste des salles ne se relit que sur l'écran d'accueil : en course, elle
+ * n'a rien à dire et son aller-retour n'a pas à disputer la bande passante au
+ * flux de positions. */
+watch(started, (running) => (running ? lobby.unwatch() : lobby.watch()), { immediate: true });
 
 /**
  * La salle n'est rejointe qu'une fois le tracé en main : c'est lui qui porte
  * son identifiant — une salle **est** un parcours (cf. `routeFingerprint`).
  */
-async function start(route) {
+async function start(route, { openRoom = false } = {}) {
   started.value = true;
   await ride.load(() => library.resolve(route.id));
-  if (ride.status.value === 'ready' && ride.path.value) room.join({ path: ride.path.value });
+  if (ride.status.value !== 'ready' || !ride.path.value) return;
+  room.join({ path: ride.path.value });
+  if (!openRoom) return;
+
+  /*
+   * L'empreinte annoncée est celle que `join` vient de retenir, et non une
+   * seconde calculée ici : l'annonce et la connexion désignent alors le même
+   * endroit par construction, sans qu'un écart de calcul puisse les séparer.
+   */
+  lobby.open({
+    fingerprint: room.roomId.value,
+    name: route.name,
+    distanceM: ride.path.value.endDistance - ride.path.value.startDistance,
+    points: library.rawPoints(route.id),
+  });
 }
 
 /**
@@ -149,12 +176,31 @@ async function start(route) {
 function stop() {
   started.value = false;
   room.leave();
+  // Quitter la séance ferme la salle : la laisser listée enverrait les autres
+  // sur un parcours que plus personne ne roule.
+  lobby.close();
 }
 
-/** Un parcours qu'on vient de déposer est celui qu'on veut essayer. */
-async function handleImport(file) {
-  const route = await library.importFile(file);
-  start(route);
+/**
+ * Dépose un parcours et le **rend** plutôt que de partir aussitôt : avec un
+ * serveur de salles, l'écran d'accueil a encore une question à poser — ouvrir
+ * une salle, ou rouler seul. Sans serveur, il enchaîne directement, et un
+ * parcours qu'on vient de déposer reste celui qu'on veut essayer.
+ */
+function handleImport(file) {
+  return library.importFile(file);
+}
+
+/**
+ * Rejoint la salle de quelqu'un : son parcours est récupéré, rangé comme
+ * n'importe quel autre, puis roulé. C'est ce qui permet de le rejoindre sans
+ * avoir jamais eu son fichier.
+ *
+ * Lève si le salon ne rend rien d'exploitable — l'écran d'accueil l'affiche.
+ */
+async function handleJoinRoom(listed) {
+  const { name, points } = await lobby.fetchRoute(listed.id);
+  await start(library.addRoute({ name: name || listed.name, points }));
 }
 </script>
 

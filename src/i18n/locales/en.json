@@ -42,12 +42,20 @@
     "NAME_PLACEHOLDER": "Name",
     "STANDINGS": "Standings",
     "MORE": "+{count} more",
-    "HINT": "One room per route: riding together means the same GPX file.",
+    "HINT": "A room is a route: the same GPX brings you together, and joining an open room hands you its track.",
     "TRUST": "Everyone reports their own position: the standings run on good faith.",
     "UNCONFIGURED": "No room server configured: the ride stays solo.",
     "CONNECTING": "Joining the room…",
     "RETRYING": "Room unreachable, trying again…",
     "ALONE": "Nobody else on this route right now.",
-    "RIDERS": "{count} in the room"
+    "RIDERS": "{count} in the room",
+    "OPEN_ROOMS": "Open rooms",
+    "HOSTED_BY": "{host}’s room",
+    "JOIN_HINT": "Joining a room gives you its route: you don’t need the file.",
+    "ASK_OPEN": "“{name}” is ready. Open a room so others can join you?",
+    "ASK_OPEN_WARN": "Your route will be sent to whoever joins the room. A recorded GPX often starts at your home.",
+    "OPEN": "Open a room",
+    "RIDE_ALONE": "Ride alone",
+    "HOSTING": "Your room is open"
   }
 }

@@ -24,3 +24,14 @@ class_name = "Room"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Room"]
+
+# Le salon — l'annuaire des salles ouvertes, et les tracés qu'elles portent.
+# Instance unique, rien sur disque non plus : l'hôte y maintient sa salle en
+# vie (cf. `lobby.js`).
+[[durable_objects.bindings]]
+name = "LOBBY"
+class_name = "Lobby"
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Lobby"]

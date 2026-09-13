@@ -35,8 +35,68 @@ la longueur — et jamais du nom du fichier ni de l'identifiant local, qui sont
 propres à chaque navigateur. Un même tracé réexporté avec un pas
 d'échantillonnage différent reste la même salle.
 
-La contrepartie est à dire aux joueurs : **rouler ensemble demande le même
-fichier**. C'est écrit sur l'écran d'accueil.
+La contrepartie était à dire aux joueurs : rouler ensemble demandait le même
+fichier. C'est ce que le salon a levé.
+
+## Le salon, ou comment une salle devient visible
+
+L'empreinte est élégante et **muette** : tant qu'on n'a pas le fichier de
+l'autre, on ne peut ni savoir qu'il roule, ni le rejoindre. Deux onglets
+ouverts sur deux parcours différents ne se voient pas, et rien à l'écran ne dit
+pourquoi — c'est la première chose que le multijoueur a coûté en
+incompréhension.
+
+Le salon (`multiplayer/lobby.js`) est un second objet durable, en instance
+unique, qui répond à cette question. Qui importe un GPX se voit proposer
+d'**ouvrir une salle** ; celle-ci apparaît alors sur l'écran d'accueil des
+autres — « Salle de Jean · Ventoux · 21,3 km » —, et la rejoindre télécharge le
+tracé avant de rouler. Plus de fichier à s'échanger.
+
+### Ce que ça coûte, et qu'il faut dire en face
+
+Le tracé monte sur le serveur et **tout occupant du salon peut le
+télécharger**. Un GPX de sortie part souvent du domicile de celui qui l'a
+enregistré : l'interface le signale au moment d'ouvrir, et ouvrir reste un
+choix explicite — l'import seul n'annonce rien.
+
+### L'hôte maintient sa salle en vie
+
+Rien n'est écrit sur disque, contrairement à ce qu'on attendrait d'un annuaire.
+L'hôte se réannonce toutes les trente secondes et une entrée qu'on cesse de
+rafraîchir s'efface au bout de quatre-vingt-dix : c'est ce qui fait disparaître
+la salle de qui a fermé son onglet, cas autrement plus fréquent qu'une instance
+recyclée par la plateforme — laquelle se reconstruit alors toute seule à
+l'annonce suivante, sans qu'aucun état périmé ne survive.
+
+Le tracé, lui, ne part qu'à l'ouverture ; les réannonces ne portent que les
+métadonnées. Si le salon a été reconstruit entre-temps et ne le connaît plus,
+il répond `needsRoute` et l'hôte le renvoie — sans quoi chaque hôte
+téléverserait son GPX deux fois par minute pour rien.
+
+### Le piège : quelles coordonnées transmettre
+
+Celui qui importe un GPX **ne roule pas sur les coordonnées du fichier**. Il
+roule sur celles que son dépôt a retenues, arrondies au millionième de degré
+(`useRouteLibrary.resolve`). Or l'empreinte se tire de la géométrie au mètre
+près : transmettre les coordonnées d'origine ferait tomber l'invité sur une
+empreinte voisine mais différente — mesuré sur quatre cents tracés de test,
+**plus d'un sur deux** —, c'est-à-dire deux salles vides au lieu d'une salle à
+deux, sans le moindre message d'erreur pour le dire.
+
+Le salon transporte donc exactement ce que le dépôt garde, dans la forme que
+`library.packPoints` produit. Ce n'est pas un troisième format qui s'ajouterait
+aux deux qui ont déjà coûté une panne d'import (cf. `CLAUDE.md`) : c'est la
+sérialisation du **brut**, et elle ne sort jamais de `lib/race/lobby.js`.
+`src/lib/race/lobby.test.mjs` franchit toute la couture — points bruts, dépôt,
+annonce, JSON, réception, dépôt de l'invité, tracé roulable, empreinte.
+
+### Pourquoi le salon n'est pas dans la salle
+
+Une salle ignore qu'elle est listée, et n'a personne à prévenir. Les deux
+objets ne se connaissent pas : le flux de positions ne doit rien devoir à un
+annuaire, qui peut disparaître et se reconstruire sans qu'un seul coureur s'en
+aperçoive. Et le salon vit à un seul endroit du globe — sans importance pour
+une liste relue toutes les cinq secondes, rédhibitoire pour des positions.
 
 ## Client-autoritaire, et personne ne surveille
 
@@ -126,13 +186,18 @@ VITE_RACE_SERVER=ws://127.0.0.1:8787 npm run dev
 ## Ce qui reste à faire
 
 - **Rien n'a été essayé à plusieurs.** Les modules purs — trame, empreinte,
-  peloton, classement — sont couverts par des tests ; la liaison elle-même, le
-  rendu du peloton et le comportement à la reconnexion demandent deux
-  navigateurs et deux personnes.
+  peloton, classement, salon — sont couverts par des tests ; la liaison
+  elle-même, le rendu du peloton et le comportement à la reconnexion demandent
+  deux navigateurs et deux personnes.
 - Le peloton n'a pas d'avatars ni de chevrons de bord : les coureurs hors de la
   bulle (au-delà de 900 m) ne sont indiqués nulle part, sinon au classement.
-- Pas de salon d'attente ni de départ groupé : on entre et on roule. Un
-  classement au scratch sur un parcours qu'on n'a pas commencé ensemble n'a
-  qu'une valeur indicative.
+- Pas de départ groupé : on entre et on roule. Un classement au scratch sur un
+  parcours qu'on n'a pas commencé ensemble n'a qu'une valeur indicative.
+- Le salon ne dit pas **combien** de coureurs sont dans une salle : l'annonce
+  vient de l'hôte, qui ne les a pas forcément encore vus. Une salle ouverte
+  peut donc être vide.
+- Rien n'a été essayé à deux navigateurs sur le salon non plus : la liste,
+  l'ouverture, la récupération du tracé et l'empreinte qui doit tomber juste
+  demandent deux personnes.
 - Pas de reprise après fermeture de l'onglet : le pseudo est retenu, la
   distance non.

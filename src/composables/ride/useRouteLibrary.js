@@ -14,7 +14,7 @@
 
 import { ref, computed } from 'vue';
 import { ROUTES, findRoute, loadRoute, pathFromRawPoints, readGpxFile } from '@/lib/route/catalog.js';
-import { readLibrary, addToLibrary, removeFromLibrary, unpackPoints } from '@/lib/route/library.js';
+import { readLibrary, addToLibrary, removeFromLibrary, routeIdFor, unpackPoints } from '@/lib/route/library.js';
 
 /** `localStorage` peut lever à la simple lecture (navigation privée stricte). */
 function safeStorage() {
@@ -79,16 +79,45 @@ export function useRouteLibrary() {
      * n'est pas exploitable, et c'est ce message-là qui est utile.
      */
     const { name, points } = await readGpxFile(file);
+    return addRoute({ name, points, loop });
+  }
+
+  /**
+   * Range un parcours déjà lu, sans passer par un fichier.
+   *
+   * C'est par là qu'entre le tracé qu'un salon transmet : rejoindre la salle de
+   * quelqu'un donne son parcours, et il se range comme n'importe quel autre —
+   * l'invité le garde, le revoit dans sa liste et peut y revenir seul.
+   *
+   * @param {Object} route
+   * @param {Array<{lng:number, lat:number, ele:number|null}>} route.points points bruts.
+   */
+  function addRoute({ name, points, loop = true }) {
     const { routes: next, stored } = addToLibrary(storage, { name, loop, points });
     imported.value = next;
     lastImportVolatile.value = !stored;
-    const entry = next.find((route) => route.name === name);
+    // Retrouvé par identifiant et non par nom : `addToLibrary` tronque les noms
+    // longs, et la comparaison sur le nom d'origine ne trouverait alors rien.
+    const entry = next.find((route) => route.id === routeIdFor(name));
     return { id: entry.id, name: entry.name, loop: entry.loop, imported: true };
+  }
+
+  /**
+   * Les points **bruts** d'un parcours déposé — ce qu'une salle transmet.
+   *
+   * Ce sont ceux que le dépôt garde, et non ceux du fichier d'origine : c'est
+   * sur eux que le tracé est reconstruit à chaque séance, donc ce sont eux qui
+   * décident de l'empreinte de salle. Transmettre les autres ferait tomber
+   * l'invité dans une salle voisine mais différente (cf. `lib/race/lobby.js`).
+   */
+  function rawPoints(id) {
+    const entry = imported.value.find((route) => route.id === id);
+    return entry ? unpackPoints(entry.coords) : null;
   }
 
   function remove(id) {
     imported.value = removeFromLibrary(storage, id);
   }
 
-  return { routes, imported, lastImportVolatile, resolve, importFile, remove };
+  return { routes, imported, lastImportVolatile, resolve, importFile, addRoute, rawPoints, remove };
 }

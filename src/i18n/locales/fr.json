@@ -42,12 +42,20 @@
     "NAME_PLACEHOLDER": "Pseudo",
     "STANDINGS": "Classement",
     "MORE": "+{count} autres",
-    "HINT": "Une salle par parcours : rouler ensemble demande le même fichier GPX.",
+    "HINT": "Une salle est un parcours : le même GPX vous réunit, et rejoindre une salle ouverte vous en donne le tracé.",
     "TRUST": "Chacun annonce lui-même sa position : le classement se joue entre gens de bonne foi.",
     "UNCONFIGURED": "Aucun serveur de salles configuré : la séance reste solo.",
     "CONNECTING": "Connexion à la salle…",
     "RETRYING": "Salle injoignable, nouvelle tentative…",
     "ALONE": "Personne d’autre sur ce parcours pour l’instant.",
-    "RIDERS": "{count} en salle"
+    "RIDERS": "{count} en salle",
+    "OPEN_ROOMS": "Salles ouvertes",
+    "HOSTED_BY": "Salle de {host}",
+    "JOIN_HINT": "Rejoindre une salle vous donne son parcours : vous n’avez pas besoin du fichier.",
+    "ASK_OPEN": "« {name} » est prêt. Ouvrir une salle pour que d’autres vous rejoignent ?",
+    "ASK_OPEN_WARN": "Votre tracé sera transmis à ceux qui rejoignent la salle. Un GPX de sortie part souvent de chez vous.",
+    "OPEN": "Ouvrir une salle",
+    "RIDE_ALONE": "Rouler seul",
+    "HOSTING": "Votre salle est ouverte"
   }
 }

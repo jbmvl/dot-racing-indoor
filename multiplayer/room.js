@@ -28,8 +28,22 @@
  * quart de seconde de peloton vide. Rien n'est écrit sur disque : une séance
  * qui s'interrompt n'a rien à reprendre, chacun repart de sa propre distance.
  *
+ * ## Le salon est à côté, pas dedans
+ *
+ * Une salle ne sait pas qu'elle est listée, et n'a personne à prévenir : c'est
+ * l'hôte qui s'annonce au salon et l'y maintient (cf. `lobby.js`). Ce Worker
+ * porte donc deux objets sans lien entre eux, et ce découplage est voulu — le
+ * flux de positions ne doit rien devoir à un annuaire, qui peut disparaître et
+ * se reconstruire sans qu'un seul coureur s'en aperçoive.
+ *
  * Déploiement : `npx wrangler deploy` depuis ce dossier. Aucune dépendance npm.
  */
+
+import { Lobby } from './lobby.js';
+
+// Un objet durable doit être exporté par le module d'entrée pour que la
+// plateforme sache l'instancier.
+export { Lobby };
 
 /** Au-delà, ce n'est plus une salle entre amis. La scène n'en montre que dix. */
 const MAX_RIDERS = 32;
@@ -41,6 +55,13 @@ const MAX_MESSAGE_BYTES = 1024;
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // Le salon est une instance unique : un annuaire n'a de sens que s'il est
+    // le même pour tout le monde.
+    if (url.pathname === '/lobby' || url.pathname.startsWith('/lobby/')) {
+      return env.LOBBY.get(env.LOBBY.idFromName('lobby')).fetch(request);
+    }
+
     const match = url.pathname.match(/^\/room\/([A-Za-z0-9_-]{1,64})$/);
 
     if (!match) {

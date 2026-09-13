@@ -23,13 +23,31 @@
     "IMPORTED": "imported",
     "REMOVE_ROUTE": "Remove this route",
     "CHANGE_ROUTE": "Change route",
-    "NO_ROUTE_YET": "No routes yet. Import a GPX file to get started."
+    "NO_ROUTE_YET": "No routes yet. Import a GPX file to get started.",
+    "RESISTANCE": "Gradient sent to the trainer"
   },
   "TRAINER": {
     "CONNECT": "Connect a trainer",
     "CONNECTING": "Searching…",
     "CONNECTED": "Connected to {name}",
     "OPTIONAL": "Optional: without a sensor, power is set from the keyboard.",
-    "UNSUPPORTED": "This browser has no Bluetooth support (Chrome or Edge on desktop and Android; iOS does not allow it). Power is set from the keyboard."
+    "UNSUPPORTED": "This browser has no Bluetooth support (Chrome or Edge on desktop and Android; iOS does not allow it). Power is set from the keyboard.",
+    "CONTROL_ACTIVE": "The gradient drives the resistance.",
+    "CONTROL_UNAVAILABLE": "This machine cannot simulate a gradient: resistance stays its own.",
+    "CONTROL_DENIED": "The machine refused resistance control."
+  },
+  "ROOM": {
+    "TITLE": "Ride together",
+    "NAME_LABEL": "Your name",
+    "NAME_PLACEHOLDER": "Name",
+    "STANDINGS": "Standings",
+    "MORE": "+{count} more",
+    "HINT": "One room per route: riding together means the same GPX file.",
+    "TRUST": "Everyone reports their own position: the standings run on good faith.",
+    "UNCONFIGURED": "No room server configured: the ride stays solo.",
+    "CONNECTING": "Joining the room…",
+    "RETRYING": "Room unreachable, trying again…",
+    "ALONE": "Nobody else on this route right now.",
+    "RIDERS": "{count} in the room"
   }
 }

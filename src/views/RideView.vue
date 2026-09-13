@@ -6,6 +6,7 @@
       :volatile="library.lastImportVolatile.value"
       :on-import="handleImport"
       :trainer="trainer"
+      :room="room"
       @choose="start"
       @remove="library.remove"
     />
@@ -15,6 +16,7 @@
         :get-ride="ride.getRide"
         :on-frame="ride.frame"
         :get-power-w="() => ride.powerW.value"
+        :get-participations="room.configured ? room.getParticipations : null"
         :active="ride.status.value === 'ready'"
         :paused="false"
       />
@@ -28,9 +30,12 @@
         :keyboard-driven="trainer.status.value !== 'connected'"
         :distance-m="ride.distanceM.value"
         :grade-pct="ride.gradePct.value"
+        :resistance-piloted="trainer.control.value === 'active'"
         :elapsed-s="ride.elapsedS.value"
         :lifted="true"
       />
+
+      <RaceStandings v-if="ride.status.value === 'ready'" :standings="room.standings.value" />
 
       <ElevationProfile
         v-if="ride.status.value === 'ready'"
@@ -44,6 +49,7 @@
           <span>{{ $t('RIDE.CHANGE_ROUTE') }}</span>
         </button>
         <h1 class="ride-view__title">{{ ride.route.value.name }}</h1>
+        <p v-if="roomLabel" class="ride-view__room">{{ roomLabel }}</p>
       </header>
 
       <div v-if="ride.status.value === 'error'" class="ride-view__error" role="alert">
@@ -64,19 +70,24 @@
  * appartient en réalité à un composable — c'est la règle que Dot Racing s'est
  * donnée pour `MapViewer`, et elle a bien vieilli.
  */
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import RideScene from '@/components/ride/RideScene.vue';
 import RideHud from '@/components/ride/RideHud.vue';
 import RoutePicker from '@/components/ride/RoutePicker.vue';
 import ElevationProfile from '@/components/ride/ElevationProfile.vue';
+import RaceStandings from '@/components/ride/RaceStandings.vue';
 import ActionButton from '@/components/ui/ActionButton.vue';
 import { useRide } from '@/composables/ride/useRide.js';
 import { useRouteLibrary } from '@/composables/ride/useRouteLibrary.js';
 import { useTrainer } from '@/composables/ride/useTrainer.js';
+import { useRoom } from '@/composables/ride/useRoom.js';
 
+const { t } = useI18n();
 const library = useRouteLibrary();
 const ride = useRide();
 const trainer = useTrainer();
+const room = useRoom();
 const started = ref(false);
 
 /*
@@ -85,10 +96,49 @@ const started = ref(false);
  * à rebrancher au moment de l'appairage.
  */
 ride.setPowerSource(trainer.getPowerW);
+/*
+ * Et la pente repart vers lui, dans l'autre sens. Branchée elle aussi une fois
+ * pour toutes : `setGrade` ne fait rien tant que la machine ne s'est pas
+ * laissé commander, donc il n'y a rien à rebrancher au moment de l'appairage.
+ */
+ride.setGradeSink(trainer.setGrade);
 
-function start(route) {
+/*
+ * Ce que les autres reçoivent de nous, lu au rythme du réseau — quatre fois par
+ * seconde. Il vient de l'état de séance et non des compteurs publiés : ceux-ci
+ * sont là pour l'écran, avec le retard que cela suppose.
+ */
+room.attach(() => {
+  const state = ride.getRide();
+  if (!state) return null;
+  return {
+    distanceM: state.distanceM,
+    routeDistanceM: state.routeDistanceM,
+    powerW: ride.powerW.value,
+    speedMs: state.speedMs,
+    laps: state.laps,
+  };
+});
+
+/** Ce que dit la salle, en une ligne. Vide quand il n'y a rien à dire. */
+const roomLabel = computed(() => {
+  if (!room.configured || !started.value) return '';
+  if (room.status.value === 'connecting') return t('ROOM.CONNECTING');
+  if (room.status.value === 'retrying') return t('ROOM.RETRYING');
+  if (room.status.value !== 'connected') return '';
+  return room.riderCount.value > 0
+    ? t('ROOM.RIDERS', { count: room.riderCount.value })
+    : t('ROOM.ALONE');
+});
+
+/**
+ * La salle n'est rejointe qu'une fois le tracé en main : c'est lui qui porte
+ * son identifiant — une salle **est** un parcours (cf. `routeFingerprint`).
+ */
+async function start(route) {
   started.value = true;
-  ride.load(() => library.resolve(route.id));
+  await ride.load(() => library.resolve(route.id));
+  if (ride.status.value === 'ready' && ride.path.value) room.join({ path: ride.path.value });
 }
 
 /**
@@ -98,6 +148,7 @@ function start(route) {
  */
 function stop() {
   started.value = false;
+  room.leave();
 }
 
 /** Un parcours qu'on vient de déposer est celui qu'on veut essayer. */
@@ -139,6 +190,15 @@ async function handleImport(file) {
 
 .ride-view__back:hover {
   background: rgba(0, 0, 0, 0.5);
+}
+
+.ride-view__room {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 .ride-view__title {

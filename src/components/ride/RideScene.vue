@@ -36,6 +36,8 @@ const props = defineProps({
   onFrame: { type: Function, default: null },
   /** Puissance instantanée, en watts. Commande les jambes du coureur. */
   getPowerW: { type: Function, default: () => undefined },
+  /** Les autres coureurs de la salle. Absente, la scène ne monte pas de foule. */
+  getParticipations: { type: Function, default: null },
   active: { type: Boolean, default: false },
   paused: { type: Boolean, default: false },
   riderColor: { type: String, default: undefined },
@@ -48,6 +50,7 @@ const { state, errorMessage, attribution } = useRideScene({
   getRide: props.getRide,
   onFrame: props.onFrame,
   getPowerW: props.getPowerW,
+  getParticipations: props.getParticipations,
   active: toRef(props, 'active'),
   paused: toRef(props, 'paused'),
   getRiderColor: () => props.riderColor,

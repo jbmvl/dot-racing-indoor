@@ -32,6 +32,21 @@
         </li>
       </ul>
 
+      <div v-if="room.configured" class="route-picker__room">
+        <label class="route-picker__label" for="rider-name">{{ $t('ROOM.NAME_LABEL') }}</label>
+        <input
+          id="rider-name"
+          v-model="room.name.value"
+          type="text"
+          class="route-picker__name-input"
+          :placeholder="$t('ROOM.NAME_PLACEHOLDER')"
+          maxlength="24"
+          autocomplete="nickname"
+        />
+        <p class="route-picker__hint">{{ $t('ROOM.HINT') }}</p>
+        <p class="route-picker__hint">{{ $t('ROOM.TRUST') }}</p>
+      </div>
+
       <div class="route-picker__trainer">
         <template v-if="trainer.supported">
           <ActionButton v-if="trainer.status.value !== 'connected'" @click="trainer.connect">
@@ -40,6 +55,7 @@
           <p v-else class="route-picker__trainer-ok">
             {{ $t('TRAINER.CONNECTED', { name: trainer.deviceName.value }) }}
           </p>
+          <p v-if="controlMessage" class="route-picker__hint">{{ controlMessage }}</p>
           <p v-if="trainer.status.value === 'error'" class="route-picker__error" role="alert">
             {{ trainer.errorMessage.value }}
           </p>
@@ -88,7 +104,8 @@
  * fichier mènent au même endroit ; les deux existent parce que le premier ne
  * marche pas au doigt sur mobile.
  */
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ActionButton from '@/components/ui/ActionButton.vue';
 import Tag from '@/components/ui/Tag.vue';
 
@@ -104,8 +121,30 @@ const props = defineProps({
   onImport: { type: Function, required: true },
   /** Résultat de `useTrainer` — l'appairage se fait avant de rouler. */
   trainer: { type: Object, required: true },
+  /*
+   * Résultat de `useRoom`. Le pseudo se donne ici, avant de partir : une fois
+   * en course, il est déjà parti aux autres, et le changer ne servirait qu'à
+   * brouiller un classement en train de se jouer.
+   */
+  room: { type: Object, required: true },
 });
 defineEmits(['choose', 'remove']);
+
+const { t } = useI18n();
+
+/*
+ * Le pilotage de résistance se dit **ici**, avant de rouler : une machine qui
+ * ne sait pas simuler la pente donne une séance parfaitement valable, mais
+ * autant l'apprendre sur l'écran d'appairage plutôt qu'au pied d'un col.
+ */
+const controlMessage = computed(() => {
+  if (props.trainer.status.value !== 'connected') return '';
+  const state = props.trainer.control.value;
+  if (state === 'active') return t('TRAINER.CONTROL_ACTIVE');
+  if (state === 'denied') return t('TRAINER.CONTROL_DENIED');
+  if (state === 'unavailable') return t('TRAINER.CONTROL_UNAVAILABLE');
+  return '';
+});
 
 const fileInput = ref(null);
 const dragging = ref(false);
@@ -239,6 +278,29 @@ function onDragLeave(event) {
 }
 
 .route-picker__import,
+.route-picker__room {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--c-divider);
+}
+
+.route-picker__label {
+  font-size: 0.78rem;
+  color: var(--c-text-soft);
+}
+
+.route-picker__name-input {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
 .route-picker__trainer {
   padding-top: 1rem;
   border-top: 1px solid var(--c-divider);

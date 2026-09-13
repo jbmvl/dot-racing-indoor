@@ -62,33 +62,57 @@ commit** :
 "worldpaint": "https://github.com/jbmvl/worldpaint/archive/<sha>.tar.gz"
 ```
 
-Trois bénéfices d'un coup : plus de git ni de SSH sur la machine de build, une
-empreinte d'intégrité dans le lockfile, et une version figée — deux builds à
-six mois d'écart installent le même décor. Le prix à payer est qu'une
-correction dans `worldpaint` ne descend plus toute seule : il faut remplacer le
-SHA et relancer `npm install`. C'est la contrepartie voulue.
+Deux bénéfices d'un coup : plus de git ni de SSH sur la machine de build, et
+une empreinte d'intégrité dans le lockfile.
 
-## La contrainte qui décidera du multijoueur
+Le prix à payer était qu'une correction dans `worldpaint` ne descendait plus
+toute seule : il fallait remplacer le SHA à la main. C'est désormais le travail
+de `scripts/worldpaint.mjs`, que `npm run build` appelle en premier : il résout
+le `main` de `worldpaint` par `git ls-remote`, réécrit l'URL et relance
+`npm install`, de sorte que le lockfile porte toujours une empreinte exacte.
+
+Ce qui aurait été plus simple et ne marche pas : pointer la dépendance sur
+`…/archive/refs/heads/main.tar.gz`. L'empreinte inscrite dans le lockfile décrit
+le contenu téléchargé ; le premier commit suivant la rend fausse, et
+l'installation s'arrête sur un `EINTEGRITY`. Une URL mouvante et un lockfile ne
+peuvent pas coexister — d'où le choix de garder l'URL figée et de déplacer le
+SHA.
+
+Trois conséquences à connaître :
+
+- le build a besoin de joindre GitHub. S'il n'y arrive pas, il **ne tombe pas** :
+  le SHA déjà figé sert, avec un avertissement dans le journal ;
+- le décor n'est plus reproductible dans le temps. Deux builds à six mois
+  d'écart ne donnent plus le même paysage ;
+- `WORLDPAINT_REF=<sha>` refait un build passé à l'identique ;
+  `WORLDPAINT_REF=<branche>` essaie un décor en cours.
+
+Le SHA reste écrit dans `package.json` : en local, une mise à jour se voit dans
+`git diff` et se commite comme avant.
+
+## La contrainte qui a décidé du multijoueur — tranchée
 
 Une fonction serverless (Vercel, Netlify) **ne peut pas tenir une connexion
-ouverte**. Elle répond à une requête et meurt. Le serveur WebSocket qu'un jeu
-temps réel demande — une salle, des positions qui circulent plusieurs fois par
-seconde — n'a donc pas sa place à côté du site.
+ouverte**. Elle répond à une requête et meurt. Le serveur qu'un jeu temps réel
+demande — une salle, des positions qui circulent plusieurs fois par seconde —
+n'a donc pas sa place à côté du site.
 
-Trois sorties, à trancher au lot 5 :
+Trois sorties étaient ouvertes ; c'est **Cloudflare Durable Objects** qui a été
+retenu, et non Supabase comme le supposait la recommandation d'alors. La raison
+a pesé plus lourd que l'économie d'un futur chantier : le client n'a ainsi
+**aucune dépendance** — une salle se rejoint avec le `WebSocket` du navigateur
+et des trames JSON de cent octets, sur une page qui porte déjà sept cents
+kilo-octets de moteur 3D. Le transport tient derrière `useRoom`, et se remplace
+sans toucher au reste.
 
-| | Ce que ça donne | Ce que ça coûte |
-|---|---|---|
-| **Supabase** (Realtime + Postgres + Auth) | diffusion et présence sur WebSocket, plus les comptes et l'historique des séances dans la foulée | une dépendance de plus, et un modèle de données à tenir |
-| **Cloudflare Durable Objects** | une salle = un objet, exactement la forme du problème ; très bon marché | un second environnement de déploiement à côté du site |
-| **Un VPS avec `ws`** | contrôle total, rien à apprendre | à exploiter et à surveiller soi-même — précisément ce qu'on cherchait à éviter |
+Le serveur vit dans `multiplayer/`, se déploie par `npx wrangler deploy`, et
+n'a aucune dépendance npm. Les comptes et l'historique du lot 6 ne demandent
+rien de temps réel : Supabase peut parfaitement s'installer à côté le jour où
+ils arriveront. Tous les détails — protocole, salles, ce qui reste à vérifier —
+sont dans [`multijoueur.md`](multijoueur.md).
 
-Recommandation : **Supabase**, parce qu'il règle en même temps les comptes et
-la sauvegarde des séances, qui arrivent de toute façon au lot 6.
-
-Rien de tout cela n'est engagé aujourd'hui : les lots 1 à 4 ne demandent aucun
-serveur, et c'est délibéré. Le multijoueur est la première fonction qui coûte
-de l'infrastructure ; autant que tout le reste tourne avant de la payer.
+Le site, lui, reste une application statique : **sans `VITE_RACE_SERVER`, rien
+ne change**, pas une connexion sortante de plus, et la séance est solo.
 
 ## Variables d'environnement
 
@@ -97,6 +121,7 @@ Préfixe `VITE_` obligatoire pour tout ce que le client lit.
 | | |
 |---|---|
 | `VITE_VECTOR_TILEJSON` | TileJSON de la source vectorielle (schéma OpenMapTiles). Par défaut, Carto. |
+| `VITE_RACE_SERVER` | Serveur de salles (`wss://…`), cf. [`multijoueur.md`](multijoueur.md). Absente, le multijoueur est simplement éteint. |
 
 ## Le point à surveiller
 

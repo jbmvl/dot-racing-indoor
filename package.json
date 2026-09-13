@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/worldpaint.mjs && vite build",
     "preview": "vite preview",
-    "test": "node --test \"src/**/*.test.mjs\""
+    "test": "node --test \"src/**/*.test.mjs\"",
+    "worldpaint": "node scripts/worldpaint.mjs"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

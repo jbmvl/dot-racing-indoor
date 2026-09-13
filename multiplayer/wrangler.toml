@@ -1,0 +1,26 @@
+# Serveur de salles de dot-racing-indoor.
+#
+# Déploiement :
+#   cd multiplayer && npx wrangler@latest deploy
+#
+# En local, avec une salle qui tourne sur la machine :
+#   npx wrangler@latest dev
+#   VITE_RACE_SERVER=ws://127.0.0.1:8787 npm run dev   # depuis la racine
+#
+# L'adresse publiée (`https://<nom>.<compte>.workers.dev`) se reporte ensuite
+# dans `VITE_RACE_SERVER`, côté site.
+
+name = "dot-racing-rooms"
+main = "room.js"
+compatibility_date = "2026-09-01"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+# Une salle est un état de passage : rien n'est écrit sur disque. La classe est
+# tout de même déclarée sur le moteur SQLite, qui est le seul ouvert aux comptes
+# gratuits — ne rien stocker ne coûte rien.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

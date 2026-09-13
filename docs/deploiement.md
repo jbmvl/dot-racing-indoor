@@ -62,11 +62,33 @@ commit** :
 "worldpaint": "https://github.com/jbmvl/worldpaint/archive/<sha>.tar.gz"
 ```
 
-Trois bénéfices d'un coup : plus de git ni de SSH sur la machine de build, une
-empreinte d'intégrité dans le lockfile, et une version figée — deux builds à
-six mois d'écart installent le même décor. Le prix à payer est qu'une
-correction dans `worldpaint` ne descend plus toute seule : il faut remplacer le
-SHA et relancer `npm install`. C'est la contrepartie voulue.
+Deux bénéfices d'un coup : plus de git ni de SSH sur la machine de build, et
+une empreinte d'intégrité dans le lockfile.
+
+Le prix à payer était qu'une correction dans `worldpaint` ne descendait plus
+toute seule : il fallait remplacer le SHA à la main. C'est désormais le travail
+de `scripts/worldpaint.mjs`, que `npm run build` appelle en premier : il résout
+le `main` de `worldpaint` par `git ls-remote`, réécrit l'URL et relance
+`npm install`, de sorte que le lockfile porte toujours une empreinte exacte.
+
+Ce qui aurait été plus simple et ne marche pas : pointer la dépendance sur
+`…/archive/refs/heads/main.tar.gz`. L'empreinte inscrite dans le lockfile décrit
+le contenu téléchargé ; le premier commit suivant la rend fausse, et
+l'installation s'arrête sur un `EINTEGRITY`. Une URL mouvante et un lockfile ne
+peuvent pas coexister — d'où le choix de garder l'URL figée et de déplacer le
+SHA.
+
+Trois conséquences à connaître :
+
+- le build a besoin de joindre GitHub. S'il n'y arrive pas, il **ne tombe pas** :
+  le SHA déjà figé sert, avec un avertissement dans le journal ;
+- le décor n'est plus reproductible dans le temps. Deux builds à six mois
+  d'écart ne donnent plus le même paysage ;
+- `WORLDPAINT_REF=<sha>` refait un build passé à l'identique ;
+  `WORLDPAINT_REF=<branche>` essaie un décor en cours.
+
+Le SHA reste écrit dans `package.json` : en local, une mise à jour se voit dans
+`git diff` et se commite comme avant.
 
 ## La contrainte qui a décidé du multijoueur — tranchée
 

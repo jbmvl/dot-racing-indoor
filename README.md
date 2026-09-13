@@ -40,7 +40,7 @@ Le Bluetooth demande Chrome ou Edge, sur ordinateur ou Android, en HTTPS ou sur
 
 | | |
 |---|---|
-| Le décor 3D | `worldpaint`, dépendance Git — **jamais** un chemin relatif |
+| Le décor 3D | `worldpaint`, dépendance Git — **jamais** un chemin relatif. `npm run build` l'amène au dernier `main` ; `WORLDPAINT_REF` fige |
 | Le coureur, son assiette, la foule | `src/lib/riderScene/`, repris de Dot Racing |
 | Le design (jetons, kit d'interface) | `src/assets/main.css`, `src/components/ui/`, repris de Dot Racing |
 | Le parcours, la séance, la scène | écrits ici |

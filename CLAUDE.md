@@ -32,19 +32,32 @@ Le générateur de paysage vit dans son propre dépôt,
 dépendance Git. Donc **toujours** `import { … } from 'worldpaint'`, jamais un
 chemin relatif ni `@/`.
 
-La dépendance est **figée sur un commit**, et déclarée comme une archive
-HTTPS plutôt qu'en raccourci `github:` — npm réécrit ce raccourci en
-`git+ssh://` dans le lockfile, ce qui fait échouer `npm ci` sur toute machine
-de build sans clé SSH :
+La dépendance est déclarée comme une **archive HTTPS sur un commit** plutôt
+qu'en raccourci `github:` — npm réécrit ce raccourci en `git+ssh://` dans le
+lockfile, ce qui fait échouer `npm ci` sur toute machine de build sans clé SSH :
 
 ```json
 "worldpaint": "https://github.com/jbmvl/worldpaint/archive/<sha>.tar.gz"
 ```
 
+Ce SHA n'est plus déplacé à la main : `scripts/worldpaint.mjs` le résout sur le
+`main` de `worldpaint` avant chaque `npm run build`, réécrit l'URL et relance
+`npm install` pour que le lockfile suive. **L'URL reste figée, c'est le SHA qui
+bouge** — une URL de branche (`…/refs/heads/main.tar.gz`) serait plus simple et
+ne peut pas marcher : npm inscrit dans le lockfile une empreinte d'intégrité du
+contenu, que le premier commit suivant invalide, et l'installation s'arrête sur
+un `EINTEGRITY` qui ne ressemble en rien à sa cause.
+
+Conséquence à connaître : **le décor n'est plus figé dans le temps**. Deux
+builds à six mois d'écart ne donnent plus le même paysage, et un commit
+malheureux dans `worldpaint` descend au prochain déploiement. `WORLDPAINT_REF`
+est la porte de sortie — un SHA pour refaire un build à l'identique, un nom de
+branche pour essayer un décor en cours.
+
 Pour corriger le décor : cloner `worldpaint` à part, faire le changement
-là-bas avec son test, publier un commit, puis remplacer le SHA ci-dessus et
-relancer `npm install` pour que le lockfile suive. Rien de ce dépôt n'est
-importé par `worldpaint`, et three.js lui est injecté, jamais importé par lui.
+là-bas avec son test, publier sur `main` — le prochain build le prend. Rien de
+ce dépôt n'est importé par `worldpaint`, et three.js lui est injecté, jamais
+importé par lui.
 
 ## Ce qui vient de Dot Racing
 

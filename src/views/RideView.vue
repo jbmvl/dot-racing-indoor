@@ -28,6 +28,7 @@
         :keyboard-driven="trainer.status.value !== 'connected'"
         :distance-m="ride.distanceM.value"
         :grade-pct="ride.gradePct.value"
+        :resistance-piloted="trainer.control.value === 'active'"
         :elapsed-s="ride.elapsedS.value"
         :lifted="true"
       />
@@ -85,6 +86,12 @@ const started = ref(false);
  * à rebrancher au moment de l'appairage.
  */
 ride.setPowerSource(trainer.getPowerW);
+/*
+ * Et la pente repart vers lui, dans l'autre sens. Branchée elle aussi une fois
+ * pour toutes : `setGrade` ne fait rien tant que la machine ne s'est pas
+ * laissé commander, donc il n'y a rien à rebrancher au moment de l'appairage.
+ */
+ride.setGradeSink(trainer.setGrade);
 
 function start(route) {
   started.value = true;

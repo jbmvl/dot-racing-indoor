@@ -11,10 +11,15 @@
  * quelques fois par seconde recopie ce que l'interface a besoin de lire.
  *
  * La vitesse ne se décide plus ici : elle sort du modèle physique, qui prend
- * une puissance et une pente. Le clavier pilote donc des **watts**, comme le
- * fera le home-trainer au lot 4 — et le jour où celui-ci arrivera, il n'y aura
- * qu'à remplacer la source de `powerW`. C'est la seule raison pour laquelle
+ * une puissance et une pente. Le clavier pilote donc des **watts**, exactement
+ * comme le home-trainer — c'est la seule raison pour laquelle brancher celui-ci
+ * n'a demandé que de remplacer la source de `powerW`, et pourquoi
  * `rideState.advance(delta, vitesse)` ignore d'où vient sa vitesse.
+ *
+ * La séance a deux bouts de fil vers l'extérieur, et ils sont symétriques :
+ * `setPowerSource` dit d'où vient la puissance, `setGradeSink` où part la
+ * pente. Ni l'un ni l'autre ne sait ce qu'il y a au bout — un home-trainer, un
+ * clavier, rien du tout —, et c'est ce qui permet de rouler sans matériel.
  */
 
 import { ref, reactive, shallowRef, onBeforeUnmount } from 'vue';
@@ -67,6 +72,8 @@ export function useRide() {
    * reprendre la main sans se battre avec un capteur muet.
    */
   let powerSource = null;
+  /** Destinataire de la pente : le home-trainer, quand il se laisse commander. */
+  let gradeSink = null;
   let keyboardPowerW = 0;
   let requestedPowerW = 0;
   let lastPublishMs = 0;
@@ -117,13 +124,25 @@ export function useRide() {
     const measured = powerSource?.();
     requestedPowerW = measured != null ? measured : keyboardPowerW;
 
+    const grade = ride.gradeAt;
+    const altitudeM = ride.altitudeM;
+
     const speedMs = integrator.advance(deltaS, {
       powerW: requestedPowerW,
-      grade: ride.gradeAt,
-      altitudeM: ride.altitudeM,
+      grade,
+      altitudeM,
     });
     ride.advance(deltaS, speedMs);
     elapsed += deltaS;
+
+    /*
+     * La même pente part vers le home-trainer, avec le gabarit qui a servi à
+     * l'intégrer : la machine applique alors le modèle du jeu, et non ses
+     * valeurs d'usine. Elle est appelée à chaque image et décide elle-même
+     * quand écrire — cf. `createGradeWriter`.
+     */
+    gradeSink?.(grade, { Crr: setup.Crr, CdA: setup.CdA, altitudeM: altitudeM ?? 0 });
+
     publish();
   }
 
@@ -158,6 +177,19 @@ export function useRide() {
    */
   function setPowerSource(source) {
     powerSource = source;
+  }
+
+  /**
+   * Branche le destinataire de la pente — le pilotage de résistance.
+   *
+   * Symétrique de `setPowerSource`, et pour la même raison : la séance ne sait
+   * pas ce qu'il y a au bout, et n'a pas à le savoir. Sans destinataire, la
+   * pente reste dans le modèle physique, ce qui est déjà une séance complète.
+   *
+   * @param {((grade:number, setup:Object) => void)|null} sink
+   */
+  function setGradeSink(sink) {
+    gradeSink = sink;
   }
 
   /** Gabarit du coureur : la masse décide de tout en côte. */
@@ -200,6 +232,7 @@ export function useRide() {
     frame,
     nudgePower,
     setPowerSource,
+    setGradeSink,
     /** Lu par la scène à chaque image. Jamais rendu réactif. */
     getRide: () => ride,
   };

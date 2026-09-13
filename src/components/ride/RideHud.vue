@@ -23,7 +23,14 @@
       </div>
       <div class="ride-hud__stat" :class="{ 'is-climb': gradePct > 0.5, 'is-descent': gradePct < -0.5 }">
         <span class="ride-hud__value">{{ gradePct.toFixed(1) }}</span>
-        <span class="ride-hud__unit">%</span>
+        <span class="ride-hud__unit">
+          <IconTablerMountain
+            v-if="resistancePiloted"
+            class="ride-hud__pilot"
+            :aria-label="$t('RIDE.RESISTANCE')"
+          />
+          %
+        </span>
       </div>
       <div class="ride-hud__stat">
         <span class="ride-hud__value">{{ clock }}</span>
@@ -36,7 +43,7 @@
 
 <script setup>
 /*
- * RideHud — les quatre chiffres qu'on regarde en roulant.
+ * RideHud — les quelques chiffres qu'on regarde en roulant.
  *
  * Volontairement muet : il n'a aucun accès à la séance, on lui passe des
  * nombres déjà publiés (cf. `useRide`). C'est ce qui permet de le rafraîchir
@@ -55,6 +62,12 @@ const props = defineProps({
   keyboardDriven: { type: Boolean, default: true },
   distanceM: { type: Number, default: 0 },
   gradePct: { type: Number, default: 0 },
+  /*
+   * Vrai quand cette pente-là part vers le home-trainer. Le dire est utile :
+   * sans repère, on ne sait pas si une côte qui ne durcit pas est une pente
+   * douce ou un pilotage qui a lâché — et les deux se ressentent pareil.
+   */
+  resistancePiloted: { type: Boolean, default: false },
   elapsedS: { type: Number, default: 0 },
   /** Remonte le bandeau au-dessus du profil altimétrique, quand il est affiché. */
   lifted: { type: Boolean, default: false },
@@ -114,6 +127,13 @@ const clock = computed(() => {
 
 .ride-hud__stat--primary .ride-hud__value {
   font-size: 1.9rem;
+}
+
+.ride-hud__pilot {
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 0.15em;
+  vertical-align: -0.05em;
 }
 
 .ride-hud__value {

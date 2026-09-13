@@ -40,6 +40,7 @@
           <p v-else class="route-picker__trainer-ok">
             {{ $t('TRAINER.CONNECTED', { name: trainer.deviceName.value }) }}
           </p>
+          <p v-if="controlMessage" class="route-picker__hint">{{ controlMessage }}</p>
           <p v-if="trainer.status.value === 'error'" class="route-picker__error" role="alert">
             {{ trainer.errorMessage.value }}
           </p>
@@ -88,7 +89,8 @@
  * fichier mènent au même endroit ; les deux existent parce que le premier ne
  * marche pas au doigt sur mobile.
  */
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ActionButton from '@/components/ui/ActionButton.vue';
 import Tag from '@/components/ui/Tag.vue';
 
@@ -106,6 +108,22 @@ const props = defineProps({
   trainer: { type: Object, required: true },
 });
 defineEmits(['choose', 'remove']);
+
+const { t } = useI18n();
+
+/*
+ * Le pilotage de résistance se dit **ici**, avant de rouler : une machine qui
+ * ne sait pas simuler la pente donne une séance parfaitement valable, mais
+ * autant l'apprendre sur l'écran d'appairage plutôt qu'au pied d'un col.
+ */
+const controlMessage = computed(() => {
+  if (props.trainer.status.value !== 'connected') return '';
+  const state = props.trainer.control.value;
+  if (state === 'active') return t('TRAINER.CONTROL_ACTIVE');
+  if (state === 'denied') return t('TRAINER.CONTROL_DENIED');
+  if (state === 'unavailable') return t('TRAINER.CONTROL_UNAVAILABLE');
+  return '';
+});
 
 const fileInput = ref(null);
 const dragging = ref(false);

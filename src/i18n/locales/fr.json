@@ -23,13 +23,17 @@
     "IMPORTED": "importé",
     "REMOVE_ROUTE": "Retirer ce parcours",
     "CHANGE_ROUTE": "Changer de parcours",
-    "NO_ROUTE_YET": "Aucun parcours pour l’instant. Importez un fichier GPX pour commencer."
+    "NO_ROUTE_YET": "Aucun parcours pour l’instant. Importez un fichier GPX pour commencer.",
+    "RESISTANCE": "Pente envoyée au home-trainer"
   },
   "TRAINER": {
     "CONNECT": "Connecter un home-trainer",
     "CONNECTING": "Recherche…",
     "CONNECTED": "Connecté à {name}",
     "OPTIONAL": "Facultatif : sans capteur, la puissance se règle au clavier.",
-    "UNSUPPORTED": "Ce navigateur ne gère pas le Bluetooth (Chrome ou Edge sur ordinateur et Android ; iOS ne le permet pas). La puissance se règle au clavier."
+    "UNSUPPORTED": "Ce navigateur ne gère pas le Bluetooth (Chrome ou Edge sur ordinateur et Android ; iOS ne le permet pas). La puissance se règle au clavier.",
+    "CONTROL_ACTIVE": "La pente pilote la résistance.",
+    "CONTROL_UNAVAILABLE": "Ce matériel ne sait pas simuler la pente : la résistance reste la sienne.",
+    "CONTROL_DENIED": "La machine a refusé le pilotage de résistance."
   }
 }

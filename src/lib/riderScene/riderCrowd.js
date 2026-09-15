@@ -226,7 +226,8 @@ export class RiderCrowd {
    * Avance la lecture de chaque coureur et le pose sur le sol.
    *
    * @param {number} delta Secondes écoulées.
-   * @param {Object} bubble La bulle de terrain (`world.bubble`).
+   * @param {Object} world Le monde WorldPaint (`roadPositionAt` — la plate-forme
+   *        de la route qui passe là, pas seulement le terrain qu'elle surplombe).
    * @param {number} roadLift Décollement de la chaussée, comme le coureur suivi.
    * @param {number} nightMix 0 en plein jour, 1 en pleine nuit.
    * @param {Function} bearingToYaw Conversion cap → lacet de la scène.
@@ -237,8 +238,8 @@ export class RiderCrowd {
    *        secondes. C'est elle qui date les états reçus : sans elle, l'horloge
    *        leur prête la cadence observée, ce qui suffit mais lisse moins bien.
    */
-  advance(delta, { bubble, roadLift = 0, nightMix = 0, bearingToYaw, camera = null, gameTime = null }) {
-    if (this.disposed || !bubble) return;
+  advance(delta, { world, roadLift = 0, nightMix = 0, bearingToYaw, camera = null, gameTime = null }) {
+    if (this.disposed || !world) return;
 
     for (const entry of this.riders.values()) {
       this._pushPosition(entry, gameTime);
@@ -254,7 +255,13 @@ export class RiderCrowd {
       // de front plutôt que s'interpénétrer.
       const side = offsetRight(at.lng, at.lat, at.bearing, entry.lateral);
       const yaw = bearingToYaw(at.bearing);
-      const ground = bubble.toScenePosition(side.lng, side.lat, roadLift);
+      // `ahead` départage un croisement en dénivelé : la foule n'a pas de
+      // tracé, mais son cap diffusé suffit à dire de quelle chaussée elle vient.
+      const ahead = offsetBy(side.lng, side.lat, at.bearing, 3);
+      const ground = world.roadPositionAt(side.lng, side.lat, roadLift, {
+        aheadLng: ahead.lng,
+        aheadLat: ahead.lat,
+      });
       // Conservée pour l'appelant : le pin photo au-dessus de la tête n'est
       // pas un objet de la scène (cf. `riderCrowdAvatars.js`), il se projette
       // à partir de cette position, une fois l'image posée.

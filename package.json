@@ -16,7 +16,7 @@
     "three": "^0.185.1",
     "vue": "^3.5.13",
     "vue-i18n": "^11.4.4",
-    "worldpaint": "https://github.com/jbmvl/worldpaint/archive/19e3c3eb842feced215345401ee2ae9e5ff65217.tar.gz"
+    "worldpaint": "https://github.com/jbmvl/worldpaint/archive/56ca4ca6f1ef3ac4f6c8b9097b609ee301e421a9.tar.gz"
   },
   "devDependencies": {
     "@iconify-json/tabler": "^1.2.33",

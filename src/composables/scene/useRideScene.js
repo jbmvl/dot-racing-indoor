@@ -364,14 +364,20 @@ export function useRideScene({
     const speed = ride.speedMs;
     const bubble = world.bubble;
     const yaw = bearingToYaw(smoothBearing);
+    const ahead = offsetBy(at.lng, at.lat, smoothBearing, 3);
     // Le coureur roule sur la chaussée, pas sur le terrain nu : même
-    // décollement que le ruban, sinon ses roues s'y enfoncent.
-    const ground = bubble.toScenePosition(at.lng, at.lat, ROAD_LIFT_M);
+    // décollement que le ruban, sinon ses roues s'y enfoncent — et sur un
+    // remblai ou un pont, c'est la plate-forme qui compte, pas le terrain
+    // qu'elle surplombe (`roadPositionAt`, sinon on roule sous la route).
+    const ground = world.roadPositionAt(at.lng, at.lat, ROAD_LIFT_M, {
+      aheadLng: ahead.lng,
+      aheadLat: ahead.lat,
+    });
 
     // Assiette : tangage et dévers lus sur le sol **effectivement rendu**, aux
     // quatre coins de l'empreinte du vélo. Un vélo rendu à plat sur une côte à
     // 8 % s'enfonce dans le bitume par la roue avant.
-    const attitude = attitudeFromGround(sampleContact(bubble, at));
+    const attitude = attitudeFromGround(sampleContact(world, at, ahead));
     const posed = pose.update(delta, {
       speed,
       curvature: ride.curvatureAt(),
@@ -479,7 +485,7 @@ export function useRideScene({
     }
 
     crowd.advance(delta, {
-      bubble: world.bubble,
+      world,
       roadLift: ROAD_LIFT_M,
       nightMix,
       bearingToYaw,
@@ -491,22 +497,26 @@ export function useRideScene({
    * Les quatre points de sol qui portent l'assiette : devant et derrière pour
    * le tangage, de part et d'autre pour le dévers.
    *
-   * On les prend sur le sol **rendu** (`toScenePosition`, qui applique déjà
-   * l'entaille de la chaussée) et non sur la pente du parcours : c'est la
-   * chaussée que touchent les roues, pas le profil du GPX.
+   * On les prend sur la chaussée **rendue** (`roadPositionAt`, qui suit sa
+   * plate-forme — remblai, pont — plutôt que le terrain qu'elle surplombe) et
+   * non sur la pente du parcours : c'est elle que touchent les roues, pas le
+   * profil du GPX. `ahead` est celui déjà calculé pour la position
+   * principale : les quatre points sont à moins d'un mètre d'elle, donc sur la
+   * même chaussée.
    */
-  function sampleContact(bubble, at) {
+  function sampleContact(world, at, ahead) {
     const halfSpan = CONTACT_SPAN_M / 2;
     const halfWidth = CONTACT_WIDTH_M / 2;
     const front = offsetBy(at.lng, at.lat, smoothBearing, halfSpan);
     const rear = offsetBy(at.lng, at.lat, smoothBearing, -halfSpan);
     const left = offsetBy(at.lng, at.lat, smoothBearing + 90, -halfWidth);
     const right = offsetBy(at.lng, at.lat, smoothBearing + 90, halfWidth);
+    const onward = { aheadLng: ahead.lng, aheadLat: ahead.lat };
     return {
-      front: bubble.toScenePosition(front.lng, front.lat, 0),
-      rear: bubble.toScenePosition(rear.lng, rear.lat, 0),
-      left: bubble.toScenePosition(left.lng, left.lat, 0),
-      right: bubble.toScenePosition(right.lng, right.lat, 0),
+      front: world.roadPositionAt(front.lng, front.lat, 0, onward),
+      rear: world.roadPositionAt(rear.lng, rear.lat, 0, onward),
+      left: world.roadPositionAt(left.lng, left.lat, 0, onward),
+      right: world.roadPositionAt(right.lng, right.lat, 0, onward),
       spanM: CONTACT_SPAN_M,
       widthM: CONTACT_WIDTH_M,
     };
@@ -535,7 +545,11 @@ export function useRideScene({
     const at = currentPlace();
     if (!at || !world?.bubble) return;
     const yaw = bearingToYaw(smoothBearing);
-    const ground = world.bubble.toScenePosition(at.lng, at.lat, 0);
+    const ahead = offsetBy(at.lng, at.lat, smoothBearing, 3);
+    const ground = world.roadPositionAt(at.lng, at.lat, 0, {
+      aheadLng: ahead.lng,
+      aheadLat: ahead.lat,
+    });
     cameraPosition.set(
       ground.x + Math.sin(yaw) * CAMERA_BACK_M,
       ground.y + CAMERA_UP_M,
